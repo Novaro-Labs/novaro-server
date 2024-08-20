@@ -1,0 +1,404 @@
+definitions:
+  model.Collections:
+    properties:
+      id:
+        type: string
+      postId:
+        type: string
+      userId:
+        type: string
+    type: object
+  model.Comments:
+    properties:
+      children:
+        items:
+          $ref: '#/definitions/model.Comments'
+        type: array
+      content:
+        type: string
+      createdAt:
+        type: string
+      id:
+        type: string
+      parentId:
+        type: string
+      postId:
+        type: string
+      userId:
+        type: string
+    type: object
+  model.Posts:
+    properties:
+      collectionsAmount:
+        type: integer
+      commentsAmount:
+        type: integer
+      content:
+        type: string
+      createdAt:
+        type: string
+      id:
+        type: string
+      repostsAmount:
+        type: integer
+      tags:
+        items:
+          $ref: '#/definitions/model.Tags'
+        type: array
+      userId:
+        type: string
+    type: object
+  model.RePosts:
+    properties:
+      id:
+        type: string
+      postId:
+        type: string
+      userId:
+        type: string
+    type: object
+  model.Tags:
+    properties:
+      createdAt:
+        type: string
+      id:
+        type: string
+      tagColor:
+        type: string
+      tagType:
+        type: string
+    type: object
+  model.TagsRecords:
+    properties:
+      createdAt:
+        type: string
+      id:
+        type: string
+      postId:
+        type: string
+      tagId:
+        type: string
+    type: object
+info:
+  contact: {}
+paths:
+  /v1/api/collections/add:
+    post:
+      consumes:
+      - application/json
+      description: Add a tweet to user's collections
+      parameters:
+      - description: Collection information
+        in: body
+        name: collection
+        required: true
+        schema:
+          $ref: '#/definitions/model.Collections'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Collections'
+        "400":
+          description: Bad Request
+      summary: Collect a tweet
+      tags:
+      - collections
+  /v1/api/collections/remove:
+    delete:
+      consumes:
+      - application/json
+      description: Remove a tweet from user's collections
+      parameters:
+      - description: Collection information
+        in: body
+        name: collection
+        required: true
+        schema:
+          $ref: '#/definitions/model.Collections'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Collections'
+        "400":
+          description: Bad Request
+      summary: Remove a tweet from collections
+      tags:
+      - collections
+  /v1/api/comments/add:
+    post:
+      consumes:
+      - application/json
+      description: Add a new comment to the system
+      parameters:
+      - description: Comment object
+        in: body
+        name: comment
+        required: true
+        schema:
+          $ref: '#/definitions/model.Comments'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Comments'
+        "400":
+          description: Bad Request
+      summary: Add a new comment
+      tags:
+      - comments
+  /v1/api/comments/getCommentsListByParentId:
+    get:
+      consumes:
+      - application/json
+      description: Get a list of child comments for a specific parent comment
+      parameters:
+      - description: Parent Comment ID
+        in: query
+        name: parentId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.Comments'
+            type: array
+        "400":
+          description: Bad Request
+      summary: Get comments by parent ID
+      tags:
+      - comments
+  /v1/api/comments/getCommentsListByPostId:
+    get:
+      consumes:
+      - application/json
+      description: Get a list of comments for a specific post
+      parameters:
+      - description: Post ID
+        in: query
+        name: postId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.Comments'
+            type: array
+        "400":
+          description: Bad Request
+      summary: Get comments by post ID
+      tags:
+      - comments
+  /v1/api/comments/getCommentsListByUserId:
+    get:
+      consumes:
+      - application/json
+      description: Get a list of comments made by a specific user
+      parameters:
+      - description: User ID
+        in: query
+        name: userId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.Comments'
+            type: array
+        "400":
+          description: Bad Request
+      summary: Get comments by user ID
+      tags:
+      - comments
+  /v1/api/posts/delPostsById:
+    delete:
+      consumes:
+      - application/json
+      description: Delete a post by its ID
+      parameters:
+      - description: Post ID
+        in: query
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+      summary: Delete a post by ID
+      tags:
+      - posts
+  /v1/api/posts/getPostsById:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve posts based on the provided ID
+      parameters:
+      - description: Posts ID
+        in: query
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully retrieved post
+        "400":
+          description: Error message
+      summary: Get posts by ID
+      tags:
+      - posts
+  /v1/api/posts/getPostsByUserId:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve posts based on the provided UserId
+      parameters:
+      - description: Posts UserId
+        in: query
+        name: userId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully retrieved post
+        "400":
+          description: Error message
+      summary: Get posts by UserId
+      tags:
+      - posts
+  /v1/api/posts/getPostsList:
+    get:
+      consumes:
+      - application/json
+      description: Get a list of posts based on query parameters
+      parameters:
+      - in: query
+        name: id
+        type: string
+      - in: query
+        name: userId
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Posts'
+        "400":
+          description: Bad Request
+      summary: Get a list of posts
+      tags:
+      - posts
+  /v1/api/posts/savePosts:
+    post:
+      consumes:
+      - application/json
+      description: Save a new post or update an existing one
+      parameters:
+      - description: Post object
+        in: body
+        name: post
+        required: true
+        schema:
+          $ref: '#/definitions/model.Posts'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Posts'
+        "400":
+          description: Bad Request
+      summary: Save a new post
+      tags:
+      - posts
+  /v1/api/reposts/add:
+    post:
+      consumes:
+      - application/json
+      description: Add a new repost to the system
+      parameters:
+      - description: Repost object
+        in: body
+        name: repost
+        required: true
+        schema:
+          $ref: '#/definitions/model.RePosts'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ' Successfully added reposts'
+        "400":
+          description: Bad Request
+      summary: Add a new repost
+      tags:
+      - reposts
+  /v1/api/tags/getTagsList:
+    get:
+      description: Retrieve a list of all available tags
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.Tags'
+            type: array
+        "400":
+          description: Bad Request
+      summary: Get list of tags
+      tags:
+      - tags
+  /v1/api/tags/records/add:
+    post:
+      consumes:
+      - application/json
+      description: Add new tags records to the system
+      parameters:
+      - description: Tags Records object
+        in: body
+        name: tagsRecords
+        required: true
+        schema:
+          $ref: '#/definitions/model.TagsRecords'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ' Successfully added tags records'
+        "400":
+          description: ' Error adding tags records'
+      summary: Add new tags records
+      tags:
+      - tags-records
+swagger: "2.0"
