@@ -16,6 +16,10 @@ type RePosts struct {
 	createdAt time.Time `json:"createdAt"`
 }
 
+func (RePosts) TableName() string {
+	return "reposts"
+}
+
 func AddRePosts(c *RePosts) error {
 	ctx := context.Background()
 	rdb := config.RDB

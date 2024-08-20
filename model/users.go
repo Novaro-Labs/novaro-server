@@ -17,3 +17,7 @@ type Users struct {
 	CreatedAt       time.Time `json:"createdAt"`
 	LastLogin       time.Time `json:"lastLogin"`
 }
+
+func (Users) TableName() string {
+	return "users"
+}

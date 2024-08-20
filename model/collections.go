@@ -17,6 +17,10 @@ type Collections struct {
 	createdAt time.Time `json:"createdAt"`
 }
 
+func (Collections) TableName() string {
+	return "collections"
+}
+
 // 获取用户收藏的推文
 func CollectionsTweet(c *Collections) error {
 	ctx := context.Background()

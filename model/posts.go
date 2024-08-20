@@ -23,6 +23,10 @@ type Posts struct {
 	Tags              []Tags    `json:"tags" gorm:"-"`
 }
 
+func (Posts) TableName() string {
+	return "posts"
+}
+
 type PostsQuery struct {
 	Id     string `form:"id" json:"id"`
 	UserId string `form:"userId" json:"userId"`

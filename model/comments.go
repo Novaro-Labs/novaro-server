@@ -16,6 +16,10 @@ type Comments struct {
 	Children  []Comments `json:"children" gorm:"-"`
 }
 
+func (Comments) TableName() string {
+	return "comments"
+}
+
 func AddComments(c *Comments) error {
 	db := config.DB
 	tx := db.Create(&c)

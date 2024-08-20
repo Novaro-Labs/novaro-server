@@ -12,6 +12,10 @@ type TagsRecords struct {
 	CreatedAt time.Time `json:"createdAt"`
 }
 
+func (TagsRecords) TableName() string {
+	return "tags_records"
+}
+
 func AddTagsRecords(t *TagsRecords) error {
 	db := config.DB
 	err := db.Create(&t).Error

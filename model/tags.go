@@ -12,6 +12,10 @@ type Tags struct {
 	CreatedAt time.Time `json:"createdAt"`
 }
 
+func (Tags) TableName() string {
+	return "tags"
+}
+
 func GetTagsList() (resp []Tags, err error) {
 	db := config.DB
 	err = db.Model(Tags{}).Find(&resp).Error

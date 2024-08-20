@@ -11,3 +11,7 @@ type TwitterUser struct {
 	TwitterFollowers *int       `json:"twitterFollowers"`
 	TwitterCreatedAt *time.Time `json:"twitterCreatedAt"`
 }
+
+func (TwitterUser) TableName() string {
+	return "twitter_user"
+}
