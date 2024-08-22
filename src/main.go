@@ -36,6 +36,7 @@ func setupRouter() *graceful.Graceful {
 	v1 := router.Group("/v1", authz.NewAuthorizer(e))
 
 	routes.AddHomeRoutes(v1)
+	routes.AddAuthRoutes(v1)
 
 	if err := router.RunWithContext(ctx); err != nil && err != context.Canceled {
 		panic(err)

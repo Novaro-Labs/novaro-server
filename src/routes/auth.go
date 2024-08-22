@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net"
 	"net/http"
 	"net/url"
@@ -13,14 +14,13 @@ import (
 
 	"github.com/casbin/casbin/v2/log"
 	"github.com/gin-gonic/gin"
-	"github.com/opencontainers/go-digest"
 )
 
 const (
 	//move to config
 	ClientId     = "cXZUcmZPcDFJRy1LS1k2SE1vSUs6MTpjaQ"
 	ClientSecret = "Pjacr7W6MYcApdXQ--0vW_-wAEsOK7abXXDGS82WYACpKfJxFF"
-	StateSize    = 16
+	Proxy        = "http://127.0.0.1:7890/"
 	VerifierSize = 32
 )
 
@@ -32,9 +32,10 @@ func AddAuthRoutes(rg *gin.RouterGroup) {
 }
 
 func login(c *gin.Context) {
-	redirectUri := fmt.Sprintf("http://%s/v1/auth/callback", c.Request.Host)
+	redirectUri := redirectUrl(c)
 	codeVerifier := generateCodeVerifier()
-	codeChallenge := generateCodeChallenge(codeVerifier)
+
+	fmt.Printf("codeVerifier: %v\n", codeVerifier)
 
 	querys := url.Values{
 		"response_type":         {"code"},
@@ -42,8 +43,8 @@ func login(c *gin.Context) {
 		"redirect_uri":          {redirectUri},
 		"scope":                 {"tweet.read+users.read+follows.read+offline.access"},
 		"state":                 {codeVerifier},
-		"code_challenge":        {codeChallenge},
-		"code_challenge_method": {"S256"},
+		"code_challenge":        {codeVerifier},
+		"code_challenge_method": {"plain"},
 	}
 
 	url := "https://x.com/i/oauth2/authorize?" + querys.Encode()
@@ -51,10 +52,10 @@ func login(c *gin.Context) {
 }
 
 func callback(c *gin.Context) {
-	redirectUri := fmt.Sprintf("http://%s/v1/auth/callback", c.Request.Host)
+	redirectUri := redirectUrl(c)
 	query := c.Request.URL.Query()
 	code := query.Get("code")
-	codeVerifier := query.Get("state")
+	codeVerifier, _ := url.QueryUnescape(query.Get("state"))
 
 	token, err := getToken(code, redirectUri, codeVerifier)
 	if err != nil {
@@ -70,6 +71,15 @@ func callback(c *gin.Context) {
 	c.JSON(200, user)
 }
 
+func redirectUrl(c *gin.Context) string {
+	scheme := "http"
+	if c.Request.TLS != nil {
+		scheme = "https"
+	}
+	redirectUri := fmt.Sprintf("%s://%s/v1/auth/callback", scheme, c.Request.Host)
+	return redirectUri
+}
+
 func getToken(code, redirectUri, codeVerifier string) (string, error) {
 	form := url.Values{
 		"code":          {code},
@@ -77,7 +87,9 @@ func getToken(code, redirectUri, codeVerifier string) (string, error) {
 		"redirect_uri":  {redirectUri},
 		"code_verifier": {codeVerifier},
 	}
-	request, err := http.NewRequest("POST", "https://api.x.com/2/oauth2/token", strings.NewReader(form.Encode()))
+	body := form.Encode()
+	fmt.Printf("token request body: %v\n", body)
+	request, err := http.NewRequest("POST", "https://api.x.com/2/oauth2/token", strings.NewReader(body))
 	if err != nil {
 		log.LogError(err, "new token request error")
 		return "", err
@@ -96,7 +108,8 @@ func getToken(code, redirectUri, codeVerifier string) (string, error) {
 
 	defer response.Body.Close()
 	if response.StatusCode != 200 {
-		return "", fmt.Errorf("request token failed: %s", response.Status)
+		rbody, _ := io.ReadAll(response.Body)
+		return "", fmt.Errorf("request token failed: %s %v", response.Status, string(rbody))
 	}
 
 	var token Token
@@ -144,15 +157,8 @@ func generateCodeVerifier() string {
 	return base64.URLEncoding.EncodeToString(b)
 }
 
-func generateCodeChallenge(codeVerifier string) string {
-	byt := []byte(codeVerifier)
-	digestAlg := digest.NewDigest(digest.SHA256, digest.SHA256.Hash())
-	digestByte := digestAlg.Algorithm().FromBytes(byt)
-
-	return base64.URLEncoding.EncodeToString([]byte(digestByte.String()))
-}
-
 func newHttpClient() *http.Client {
+	URL, _ := url.Parse(Proxy)
 	transport := &http.Transport{
 		Dial: (&net.Dialer{
 			Timeout:   60 * time.Second,
@@ -160,6 +166,9 @@ func newHttpClient() *http.Client {
 		}).Dial,
 		// We use ABSURDLY large keys, and should probably not.
 		TLSHandshakeTimeout: 60 * time.Second,
+	}
+	if Proxy != "" {
+		transport.Proxy = http.ProxyURL(URL)
 	}
 	client := &http.Client{
 		Transport: transport,
