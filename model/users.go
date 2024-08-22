@@ -1,6 +1,9 @@
 package model
 
-import "time"
+import (
+	"novaro-server/config"
+	"time"
+)
 
 type Users struct {
 	Id              string    `json:"id"`
@@ -20,4 +23,19 @@ type Users struct {
 
 func (Users) TableName() string {
 	return "users"
+}
+
+func SaveUsers(users *Users) error {
+	db := config.DB
+	var data = Users{
+		Id:              users.Id,
+		TwitterId:       users.TwitterId,
+		UserName:        users.UserName,
+		CreatedAt:       users.CreatedAt,
+		Avatar:          users.Avatar,
+		WalletPublicKey: users.WalletPublicKey,
+	}
+
+	tx := db.Create(&data)
+	return tx.Error
 }

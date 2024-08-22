@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"net/url"
 	"novaro-server/config"
+	"novaro-server/model"
 	"strings"
 	"time"
 
@@ -61,6 +62,12 @@ func callback(c *gin.Context) {
 	}
 
 	user, err := getUserInfo(token)
+	if err != nil {
+		c.String(500, err.Error())
+		return
+	}
+
+	err = model.SaveUsers(user.toUsers())
 	if err != nil {
 		c.String(500, err.Error())
 		return
@@ -193,4 +200,14 @@ type UserInfo struct {
 	Created  time.Time `json:"created_at"`
 	Id       string    `json:"id"`
 	Username string    `json:"username"`
+}
+
+func (userInfo *UserInfo) toUsers() *model.Users {
+	users := &model.Users{
+		TwitterId: userInfo.Id,
+		UserName:  userInfo.Username,
+		CreatedAt: userInfo.Created,
+		Avatar:    &userInfo.Avatar,
+	}
+	return users
 }
