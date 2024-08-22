@@ -9,6 +9,7 @@ import (
 	"net"
 	"net/http"
 	"net/url"
+	"novaro-server/config"
 	"strings"
 	"time"
 
@@ -17,10 +18,6 @@ import (
 )
 
 const (
-	//move to config
-	ClientId     = "cXZUcmZPcDFJRy1LS1k2SE1vSUs6MTpjaQ"
-	ClientSecret = "Pjacr7W6MYcApdXQ--0vW_-wAEsOK7abXXDGS82WYACpKfJxFF"
-	Proxy        = "http://127.0.0.1:7890/"
 	VerifierSize = 32
 )
 
@@ -39,7 +36,7 @@ func login(c *gin.Context) {
 
 	querys := url.Values{
 		"response_type":         {"code"},
-		"client_id":             {ClientId},
+		"client_id":             {config.ClientId},
 		"redirect_uri":          {redirectUri},
 		"scope":                 {"tweet.read+users.read+follows.read+offline.access"},
 		"state":                 {codeVerifier},
@@ -95,7 +92,7 @@ func getToken(code, redirectUri, codeVerifier string) (string, error) {
 		return "", err
 	}
 
-	request.SetBasicAuth(ClientId, ClientSecret)
+	request.SetBasicAuth(config.ClientId, config.ClientSecret)
 	request.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 
 	client := newHttpClient()
@@ -158,7 +155,6 @@ func generateCodeVerifier() string {
 }
 
 func newHttpClient() *http.Client {
-	URL, _ := url.Parse(Proxy)
 	transport := &http.Transport{
 		Dial: (&net.Dialer{
 			Timeout:   60 * time.Second,
@@ -167,8 +163,11 @@ func newHttpClient() *http.Client {
 		// We use ABSURDLY large keys, and should probably not.
 		TLSHandshakeTimeout: 60 * time.Second,
 	}
-	if Proxy != "" {
-		transport.Proxy = http.ProxyURL(URL)
+	if config.Proxy != "" {
+		proxyUrl, err := url.Parse(config.Proxy)
+		if err == nil {
+			transport.Proxy = http.ProxyURL(proxyUrl)
+		}
 	}
 	client := &http.Client{
 		Transport: transport,
