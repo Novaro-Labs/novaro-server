@@ -6,18 +6,20 @@ import (
 )
 
 type CollectionsApi struct {
+	UserId string `json:"userId" binding:"required"`
+	PostId string `json:"postId" binding:"required"`
 }
 
 // CollectionsTweet godoc
 // @Summary Collect a tweet
-// @Description Add a tweet to user's collections
+// @Description Add a tweet to user's collection
 // @Tags collections
 // @Accept json
 // @Produce json
-// @Param collection body model.Collections true "Collection information"
-// @Success 200 {object} model.Collections
+// @Param  body body CollectionsApi true "Collection information"
+// @Success 200
 // @Failure 400
-// @Router /v1/api/collections/add [post]
+// @Router /vi/api/collections/add [post]
 func (CollectionsApi) CollectionsTweet(c *gin.Context) {
 	var collections model.Collections
 
@@ -26,24 +28,40 @@ func (CollectionsApi) CollectionsTweet(c *gin.Context) {
 		return
 	}
 
+	if collections.UserId == "" || collections.PostId == "" {
+		c.JSON(400, gin.H{"error": "userId and postId is required"})
+		return
+	}
+
+	exist, err := model.UserExists(collections.UserId)
+	if err != nil || exist == false {
+		c.JSON(400, gin.H{"error": "userId is not exist"})
+		return
+	}
+
+	postExist, err := model.PostExists(collections.PostId)
+	if err != nil || postExist == false {
+		c.JSON(400, gin.H{"error": "postId is not exist"})
+		return
+	}
+
 	if err := model.CollectionsTweet(&collections); err != nil {
 		c.JSON(400, gin.H{"error": err.Error()})
 		return
 	}
-
-	c.JSON(200, collections)
+	c.JSON(200, gin.H{"msg": "success"})
 }
 
 // UnCollectionsTweet godoc
-// @Summary Remove a tweet from collections
-// @Description Remove a tweet from user's collections
+// @Summary Cancel collect a tweet
+// @Description Cancel add a tweet to user's collection
 // @Tags collections
 // @Accept json
 // @Produce json
-// @Param collection body model.Collections true "Collection information"
-// @Success 200 {object} model.Collections
+// @Param  body body CollectionsApi true "Collection information"
+// @Success 200
 // @Failure 400
-// @Router /v1/api/collections/remove [delete]
+// @Router /vi/api/collections/remove [post]
 func (CollectionsApi) UnCollectionsTweet(c *gin.Context) {
 	var coll model.Collections
 
@@ -52,9 +70,26 @@ func (CollectionsApi) UnCollectionsTweet(c *gin.Context) {
 		return
 	}
 
+	if coll.UserId == "" || coll.PostId == "" {
+		c.JSON(400, gin.H{"error": "userId and postId is required"})
+		return
+	}
+
+	exist, err := model.UserExists(coll.UserId)
+	if err != nil || exist == false {
+		c.JSON(400, gin.H{"error": "userId is not exist"})
+		return
+	}
+
+	postExist, err := model.PostExists(coll.PostId)
+	if err != nil || postExist == false {
+		c.JSON(400, gin.H{"error": "postId is not exist"})
+		return
+	}
+
 	if err := model.UnCollectionsTweet(&coll); err != nil {
 		c.JSON(400, gin.H{"error": err.Error()})
 		return
 	}
-	c.JSON(200, coll)
+	c.JSON(200, gin.H{"msg": "success"})
 }

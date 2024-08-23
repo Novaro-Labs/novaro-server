@@ -5,9 +5,11 @@ import (
 	"errors"
 	"fmt"
 	"github.com/go-redis/redis/v8"
+	"github.com/google/uuid"
 	"gorm.io/gorm"
 	"log"
 	"novaro-server/config"
+	"strings"
 	"sync"
 	"time"
 )
@@ -30,6 +32,12 @@ func (Posts) TableName() string {
 type PostsQuery struct {
 	Id     string `form:"id" json:"id"`
 	UserId string `form:"userId" json:"userId"`
+}
+
+func (u *Posts) BeforeCreate(tx *gorm.DB) error {
+	u2 := uuid.New()
+	u.Id = strings.ReplaceAll(u2.String(), "-", "")
+	return nil
 }
 
 func GetPostsList(p *PostsQuery) (resp []Posts, err error) {
@@ -69,6 +77,13 @@ func GetPostsById(id string) (resp Posts, err error) {
 	tags, err := GetTagListByPostId(resp.Id)
 	resp.Tags = tags
 	return resp, err
+}
+
+func PostExists(id string) (bool, error) {
+	db := config.DB
+	var count int64
+	err := db.Model(&Posts{}).Where("id = ?", id).Count(&count).Error
+	return count > 0, err
 }
 
 func GetPostsByUserId(userId string) (resp []Posts, err error) {

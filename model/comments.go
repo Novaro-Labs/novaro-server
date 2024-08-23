@@ -2,7 +2,10 @@ package model
 
 import (
 	"fmt"
+	"github.com/google/uuid"
+	"gorm.io/gorm"
 	"novaro-server/config"
+	"strings"
 	"time"
 )
 
@@ -18,6 +21,12 @@ type Comments struct {
 
 func (Comments) TableName() string {
 	return "comments"
+}
+
+func (u *Comments) BeforeCreate(tx *gorm.DB) error {
+	u2 := uuid.New()
+	u.Id = strings.ReplaceAll(u2.String(), "-", "")
+	return nil
 }
 
 func AddComments(c *Comments) error {
@@ -70,4 +79,10 @@ func GetCommentsListByUserId(userId string) (resp []Comments, err error) {
 		return resp, err
 	}
 	return resp, nil
+}
+
+func DeleteById(id string) error {
+	db := config.DB
+	tx := db.Table("comments").Where("id = ?", id).Delete(&Comments{})
+	return tx.Error
 }

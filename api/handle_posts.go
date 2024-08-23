@@ -6,17 +6,19 @@ import (
 )
 
 type PostsApi struct {
+	UserId  string `json:"userId"`
+	Content string `json:"content"`
 }
 
 // GetPostsById godoc
-// @Summary Get posts by ID
-// @Description Retrieve posts based on the provided ID
+// @Summary Get a post by ID
+// @Description Retrieves a post from the database based on the provided ID
 // @Tags posts
 // @Accept json
 // @Produce json
-// @Param id query string true "Posts ID"
-// @Success 200 "Successfully retrieved post"
-// @Failure 400 "Error message"
+// @Param id query string true "PostID"
+// @Success 200 {object} model.Posts
+// @Failure 400
 // @Router /v1/api/posts/getPostsById [get]
 func (PostsApi) GetPostsById(c *gin.Context) {
 	value := c.Query("id")
@@ -30,14 +32,14 @@ func (PostsApi) GetPostsById(c *gin.Context) {
 }
 
 // GetPostsByUserId godoc
-// @Summary Get posts by UserId
-// @Description Retrieve posts based on the provided UserId
+// @Summary Get posts by user ID
+// @Description Retrieves all posts from the database for a specific user
 // @Tags posts
 // @Accept json
 // @Produce json
-// @Param userId query string true "Posts UserId"
-// @Success 200 "Successfully retrieved post"
-// @Failure 400 "Error message"
+// @Param userId query string true "UserID"
+// @Success 200 {array} model.Posts
+// @Failure 400
 // @Router /v1/api/posts/getPostsByUserId [get]
 func (PostsApi) GetPostsByUserId(c *gin.Context) {
 	id := c.Query("userId")
@@ -51,17 +53,16 @@ func (PostsApi) GetPostsByUserId(c *gin.Context) {
 
 // GetPostsList godoc
 // @Summary Get a list of posts
-// @Description Get a list of posts based on query parameters
+// @Description Retrieves a list of posts based on the provided query parameters
 // @Tags posts
 // @Accept json
 // @Produce json
-// @Param query query model.PostsQuery false "Query parameters"
-// @Success 200 {object} model.Posts
+// @Param query body model.PostsQuery false "Query parameters"
+// @Success 200 {array} model.Posts
 // @Failure 400
-// @Router /v1/api/posts/getPostsList [get]
+// @Router /v1/api/posts/getPostsList [post]
 func (PostsApi) GetPostsList(c *gin.Context) {
 	var postsQuery model.PostsQuery
-
 	if err := c.ShouldBind(&postsQuery); err != nil {
 		c.JSON(400, gin.H{"error": err.Error()})
 		return
@@ -77,11 +78,11 @@ func (PostsApi) GetPostsList(c *gin.Context) {
 
 // SavePosts godoc
 // @Summary Save a new post
-// @Description Save a new post or update an existing one
+// @Description Creates a new post in the database
 // @Tags posts
 // @Accept json
 // @Produce json
-// @Param post body model.Posts true "Post object"
+// @Param post body PostsApi true "Post object"
 // @Success 200 {object} model.Posts
 // @Failure 400
 // @Router /v1/api/posts/savePosts [post]
@@ -102,7 +103,7 @@ func (PostsApi) SavePosts(c *gin.Context) {
 
 // DelPostsById godoc
 // @Summary Delete a post by ID
-// @Description Delete a post by its ID
+// @Description Deletes a post from the database based on the provided ID
 // @Tags posts
 // @Accept json
 // @Produce json

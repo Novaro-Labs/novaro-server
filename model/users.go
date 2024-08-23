@@ -1,9 +1,15 @@
 package model
 
-import "time"
+import (
+	"github.com/google/uuid"
+	"gorm.io/gorm"
+	"novaro-server/config"
+	"strings"
+	"time"
+)
 
 type Users struct {
-	Id              string    `json:"id"`
+	Id              string    `json:"id" `
 	TwitterId       string    `json:"twitterID"`
 	UserName        string    `json:"userName"`
 	Avatar          *string   `json:"avatar"`
@@ -20,4 +26,17 @@ type Users struct {
 
 func (Users) TableName() string {
 	return "users"
+}
+
+func (u *Users) BeforeCreate(tx *gorm.DB) error {
+	u2 := uuid.New()
+	u.Id = strings.ReplaceAll(u2.String(), "-", "")
+	return nil
+}
+
+func UserExists(userId string) (bool, error) {
+	db := config.DB
+	var count int64
+	err := db.Model(&Users{}).Where("id = ?", userId).Count(&count).Error
+	return count > 0, err
 }

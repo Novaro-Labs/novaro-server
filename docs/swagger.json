@@ -4,80 +4,6 @@
         "contact": {}
     },
     "paths": {
-        "/v1/api/collections/add": {
-            "post": {
-                "description": "Add a tweet to user's collections",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "collections"
-                ],
-                "summary": "Collect a tweet",
-                "parameters": [
-                    {
-                        "description": "Collection information",
-                        "name": "collection",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/model.Collections"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/model.Collections"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request"
-                    }
-                }
-            }
-        },
-        "/v1/api/collections/remove": {
-            "delete": {
-                "description": "Remove a tweet from user's collections",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "collections"
-                ],
-                "summary": "Remove a tweet from collections",
-                "parameters": [
-                    {
-                        "description": "Collection information",
-                        "name": "collection",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/model.Collections"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/model.Collections"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request"
-                    }
-                }
-            }
-        },
         "/v1/api/comments/add": {
             "post": {
                 "description": "Add a new comment to the system",
@@ -98,16 +24,45 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/model.Comments"
+                            "$ref": "#/definitions/api.CommentsApi"
                         }
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/model.Comments"
-                        }
+                        "description": "OK"
+                    },
+                    "400": {
+                        "description": "Bad Request"
+                    }
+                }
+            }
+        },
+        "/v1/api/comments/delete": {
+            "delete": {
+                "description": "Deletes a comment from the database based on the provided ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "comments"
+                ],
+                "summary": "Delete a comment by ID",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Comment ID",
+                        "name": "id",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
                     },
                     "400": {
                         "description": "Bad Request"
@@ -207,7 +162,7 @@
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "User ID",
+                        "description": "UserID",
                         "name": "userId",
                         "in": "query",
                         "required": true
@@ -231,7 +186,7 @@
         },
         "/v1/api/posts/delPostsById": {
             "delete": {
-                "description": "Delete a post by its ID",
+                "description": "Deletes a post from the database based on the provided ID",
                 "consumes": [
                     "application/json"
                 ],
@@ -263,7 +218,7 @@
         },
         "/v1/api/posts/getPostsById": {
             "get": {
-                "description": "Retrieve posts based on the provided ID",
+                "description": "Retrieves a post from the database based on the provided ID",
                 "consumes": [
                     "application/json"
                 ],
@@ -273,81 +228,14 @@
                 "tags": [
                     "posts"
                 ],
-                "summary": "Get posts by ID",
+                "summary": "Get a post by ID",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Posts ID",
+                        "description": "PostID",
                         "name": "id",
                         "in": "query",
                         "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Successfully retrieved post"
-                    },
-                    "400": {
-                        "description": "Error message"
-                    }
-                }
-            }
-        },
-        "/v1/api/posts/getPostsByUserId": {
-            "get": {
-                "description": "Retrieve posts based on the provided UserId",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "posts"
-                ],
-                "summary": "Get posts by UserId",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Posts UserId",
-                        "name": "userId",
-                        "in": "query",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Successfully retrieved post"
-                    },
-                    "400": {
-                        "description": "Error message"
-                    }
-                }
-            }
-        },
-        "/v1/api/posts/getPostsList": {
-            "get": {
-                "description": "Get a list of posts based on query parameters",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "posts"
-                ],
-                "summary": "Get a list of posts",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "name": "id",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "name": "userId",
-                        "in": "query"
                     }
                 ],
                 "responses": {
@@ -363,9 +251,86 @@
                 }
             }
         },
+        "/v1/api/posts/getPostsByUserId": {
+            "get": {
+                "description": "Retrieves all posts from the database for a specific user",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "posts"
+                ],
+                "summary": "Get posts by user ID",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "UserID",
+                        "name": "userId",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/model.Posts"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request"
+                    }
+                }
+            }
+        },
+        "/v1/api/posts/getPostsList": {
+            "post": {
+                "description": "Retrieves a list of posts based on the provided query parameters",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "posts"
+                ],
+                "summary": "Get a list of posts",
+                "parameters": [
+                    {
+                        "description": "Query parameters",
+                        "name": "query",
+                        "in": "body",
+                        "schema": {
+                            "$ref": "#/definitions/model.PostsQuery"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/model.Posts"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request"
+                    }
+                }
+            }
+        },
         "/v1/api/posts/savePosts": {
             "post": {
-                "description": "Save a new post or update an existing one",
+                "description": "Creates a new post in the database",
                 "consumes": [
                     "application/json"
                 ],
@@ -383,7 +348,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/model.Posts"
+                            "$ref": "#/definitions/api.PostsApi"
                         }
                     }
                 ],
@@ -400,9 +365,9 @@
                 }
             }
         },
-        "/v1/api/reposts/add": {
+        "/vi/api/collections/add": {
             "post": {
-                "description": "Add a new repost to the system",
+                "description": "Add a tweet to user's collection",
                 "consumes": [
                     "application/json"
                 ],
@@ -410,23 +375,23 @@
                     "application/json"
                 ],
                 "tags": [
-                    "reposts"
+                    "collections"
                 ],
-                "summary": "Add a new repost",
+                "summary": "Collect a tweet",
                 "parameters": [
                     {
-                        "description": "Repost object",
-                        "name": "repost",
+                        "description": "Collection information",
+                        "name": "body",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/model.RePosts"
+                            "$ref": "#/definitions/api.CollectionsApi"
                         }
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": " Successfully added reposts"
+                        "description": "OK"
                     },
                     "400": {
                         "description": "Bad Request"
@@ -434,35 +399,9 @@
                 }
             }
         },
-        "/v1/api/tags/getTagsList": {
-            "get": {
-                "description": "Retrieve a list of all available tags",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "tags"
-                ],
-                "summary": "Get list of tags",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/model.Tags"
-                            }
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request"
-                    }
-                }
-            }
-        },
-        "/v1/api/tags/records/add": {
+        "/vi/api/collections/remove": {
             "post": {
-                "description": "Add new tags records to the system",
+                "description": "Cancel add a tweet to user's collection",
                 "consumes": [
                     "application/json"
                 ],
@@ -470,39 +409,68 @@
                     "application/json"
                 ],
                 "tags": [
-                    "tags-records"
+                    "collections"
                 ],
-                "summary": "Add new tags records",
+                "summary": "Cancel collect a tweet",
                 "parameters": [
                     {
-                        "description": "Tags Records object",
-                        "name": "tagsRecords",
+                        "description": "Collection information",
+                        "name": "body",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/model.TagsRecords"
+                            "$ref": "#/definitions/api.CollectionsApi"
                         }
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": " Successfully added tags records"
+                        "description": "OK"
                     },
                     "400": {
-                        "description": " Error adding tags records"
+                        "description": "Bad Request"
                     }
                 }
             }
         }
     },
     "definitions": {
-        "model.Collections": {
+        "api.CollectionsApi": {
+            "type": "object",
+            "required": [
+                "postId",
+                "userId"
+            ],
+            "properties": {
+                "postId": {
+                    "type": "string"
+                },
+                "userId": {
+                    "type": "string"
+                }
+            }
+        },
+        "api.CommentsApi": {
             "type": "object",
             "properties": {
-                "id": {
+                "content": {
+                    "type": "string"
+                },
+                "parentId": {
                     "type": "string"
                 },
                 "postId": {
+                    "type": "string"
+                },
+                "userId": {
+                    "type": "string"
+                }
+            }
+        },
+        "api.PostsApi": {
+            "type": "object",
+            "properties": {
+                "content": {
                     "type": "string"
                 },
                 "userId": {
@@ -571,13 +539,10 @@
                 }
             }
         },
-        "model.RePosts": {
+        "model.PostsQuery": {
             "type": "object",
             "properties": {
                 "id": {
-                    "type": "string"
-                },
-                "postId": {
                     "type": "string"
                 },
                 "userId": {
@@ -598,23 +563,6 @@
                     "type": "string"
                 },
                 "tagType": {
-                    "type": "string"
-                }
-            }
-        },
-        "model.TagsRecords": {
-            "type": "object",
-            "properties": {
-                "createdAt": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "string"
-                },
-                "postId": {
-                    "type": "string"
-                },
-                "tagId": {
                     "type": "string"
                 }
             }

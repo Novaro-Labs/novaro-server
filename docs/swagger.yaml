@@ -1,9 +1,28 @@
 definitions:
-  model.Collections:
+  api.CollectionsApi:
     properties:
-      id:
+      postId:
+        type: string
+      userId:
+        type: string
+    required:
+    - postId
+    - userId
+    type: object
+  api.CommentsApi:
+    properties:
+      content:
+        type: string
+      parentId:
         type: string
       postId:
+        type: string
+      userId:
+        type: string
+    type: object
+  api.PostsApi:
+    properties:
+      content:
         type: string
       userId:
         type: string
@@ -48,11 +67,9 @@ definitions:
       userId:
         type: string
     type: object
-  model.RePosts:
+  model.PostsQuery:
     properties:
       id:
-        type: string
-      postId:
         type: string
       userId:
         type: string
@@ -68,68 +85,9 @@ definitions:
       tagType:
         type: string
     type: object
-  model.TagsRecords:
-    properties:
-      createdAt:
-        type: string
-      id:
-        type: string
-      postId:
-        type: string
-      tagId:
-        type: string
-    type: object
 info:
   contact: {}
 paths:
-  /v1/api/collections/add:
-    post:
-      consumes:
-      - application/json
-      description: Add a tweet to user's collections
-      parameters:
-      - description: Collection information
-        in: body
-        name: collection
-        required: true
-        schema:
-          $ref: '#/definitions/model.Collections'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/model.Collections'
-        "400":
-          description: Bad Request
-      summary: Collect a tweet
-      tags:
-      - collections
-  /v1/api/collections/remove:
-    delete:
-      consumes:
-      - application/json
-      description: Remove a tweet from user's collections
-      parameters:
-      - description: Collection information
-        in: body
-        name: collection
-        required: true
-        schema:
-          $ref: '#/definitions/model.Collections'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/model.Collections'
-        "400":
-          description: Bad Request
-      summary: Remove a tweet from collections
-      tags:
-      - collections
   /v1/api/comments/add:
     post:
       consumes:
@@ -141,17 +99,36 @@ paths:
         name: comment
         required: true
         schema:
-          $ref: '#/definitions/model.Comments'
+          $ref: '#/definitions/api.CommentsApi'
       produces:
       - application/json
       responses:
         "200":
           description: OK
-          schema:
-            $ref: '#/definitions/model.Comments'
         "400":
           description: Bad Request
       summary: Add a new comment
+      tags:
+      - comments
+  /v1/api/comments/delete:
+    delete:
+      consumes:
+      - application/json
+      description: Deletes a comment from the database based on the provided ID
+      parameters:
+      - description: Comment ID
+        in: query
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+      summary: Delete a comment by ID
       tags:
       - comments
   /v1/api/comments/getCommentsListByParentId:
@@ -210,7 +187,7 @@ paths:
       - application/json
       description: Get a list of comments made by a specific user
       parameters:
-      - description: User ID
+      - description: UserID
         in: query
         name: userId
         required: true
@@ -233,7 +210,7 @@ paths:
     delete:
       consumes:
       - application/json
-      description: Delete a post by its ID
+      description: Deletes a post from the database based on the provided ID
       parameters:
       - description: Post ID
         in: query
@@ -254,55 +231,12 @@ paths:
     get:
       consumes:
       - application/json
-      description: Retrieve posts based on the provided ID
+      description: Retrieves a post from the database based on the provided ID
       parameters:
-      - description: Posts ID
+      - description: PostID
         in: query
         name: id
         required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Successfully retrieved post
-        "400":
-          description: Error message
-      summary: Get posts by ID
-      tags:
-      - posts
-  /v1/api/posts/getPostsByUserId:
-    get:
-      consumes:
-      - application/json
-      description: Retrieve posts based on the provided UserId
-      parameters:
-      - description: Posts UserId
-        in: query
-        name: userId
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Successfully retrieved post
-        "400":
-          description: Error message
-      summary: Get posts by UserId
-      tags:
-      - posts
-  /v1/api/posts/getPostsList:
-    get:
-      consumes:
-      - application/json
-      description: Get a list of posts based on query parameters
-      parameters:
-      - in: query
-        name: id
-        type: string
-      - in: query
-        name: userId
         type: string
       produces:
       - application/json
@@ -313,6 +247,56 @@ paths:
             $ref: '#/definitions/model.Posts'
         "400":
           description: Bad Request
+      summary: Get a post by ID
+      tags:
+      - posts
+  /v1/api/posts/getPostsByUserId:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves all posts from the database for a specific user
+      parameters:
+      - description: UserID
+        in: query
+        name: userId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.Posts'
+            type: array
+        "400":
+          description: Bad Request
+      summary: Get posts by user ID
+      tags:
+      - posts
+  /v1/api/posts/getPostsList:
+    post:
+      consumes:
+      - application/json
+      description: Retrieves a list of posts based on the provided query parameters
+      parameters:
+      - description: Query parameters
+        in: body
+        name: query
+        schema:
+          $ref: '#/definitions/model.PostsQuery'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.Posts'
+            type: array
+        "400":
+          description: Bad Request
       summary: Get a list of posts
       tags:
       - posts
@@ -320,14 +304,14 @@ paths:
     post:
       consumes:
       - application/json
-      description: Save a new post or update an existing one
+      description: Creates a new post in the database
       parameters:
       - description: Post object
         in: body
         name: post
         required: true
         schema:
-          $ref: '#/definitions/model.Posts'
+          $ref: '#/definitions/api.PostsApi'
       produces:
       - application/json
       responses:
@@ -340,65 +324,48 @@ paths:
       summary: Save a new post
       tags:
       - posts
-  /v1/api/reposts/add:
+  /vi/api/collections/add:
     post:
       consumes:
       - application/json
-      description: Add a new repost to the system
+      description: Add a tweet to user's collection
       parameters:
-      - description: Repost object
+      - description: Collection information
         in: body
-        name: repost
+        name: body
         required: true
         schema:
-          $ref: '#/definitions/model.RePosts'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: ' Successfully added reposts'
-        "400":
-          description: Bad Request
-      summary: Add a new repost
-      tags:
-      - reposts
-  /v1/api/tags/getTagsList:
-    get:
-      description: Retrieve a list of all available tags
+          $ref: '#/definitions/api.CollectionsApi'
       produces:
       - application/json
       responses:
         "200":
           description: OK
-          schema:
-            items:
-              $ref: '#/definitions/model.Tags'
-            type: array
         "400":
           description: Bad Request
-      summary: Get list of tags
+      summary: Collect a tweet
       tags:
-      - tags
-  /v1/api/tags/records/add:
+      - collections
+  /vi/api/collections/remove:
     post:
       consumes:
       - application/json
-      description: Add new tags records to the system
+      description: Cancel add a tweet to user's collection
       parameters:
-      - description: Tags Records object
+      - description: Collection information
         in: body
-        name: tagsRecords
+        name: body
         required: true
         schema:
-          $ref: '#/definitions/model.TagsRecords'
+          $ref: '#/definitions/api.CollectionsApi'
       produces:
       - application/json
       responses:
         "200":
-          description: ' Successfully added tags records'
+          description: OK
         "400":
-          description: ' Error adding tags records'
-      summary: Add new tags records
+          description: Bad Request
+      summary: Cancel collect a tweet
       tags:
-      - tags-records
+      - collections
 swagger: "2.0"

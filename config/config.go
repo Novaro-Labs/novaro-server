@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/glebarez/sqlite"
 	"github.com/go-redis/redis/v8"
+	"github.com/rabbitmq/amqp091-go"
 	"github.com/spf13/viper"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -13,6 +14,8 @@ import (
 var DB *gorm.DB
 
 var RDB *redis.Client
+
+var RBQ *amqp091.Connection
 
 func Init() {
 	viper.SetConfigName("config")
@@ -46,4 +49,9 @@ func Init() {
 	RDB = redis.NewClient(&redis.Options{
 		Addr: "localhost:6379",
 	})
+
+	RBQ, err = amqp091.Dial("amqp://root:rabbitmqtest@localhost:5672/")
+	if err != nil {
+		log.Fatal("RabbitMQ connection test failed:", err)
+	}
 }
