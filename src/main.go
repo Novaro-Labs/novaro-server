@@ -2,17 +2,19 @@ package main
 
 import (
 	"context"
-	"github.com/robfig/cron/v3"
 	"novaro-server/config"
 	"novaro-server/model"
 	"os/signal"
 	"syscall"
 
+	"github.com/robfig/cron/v3"
+
+	"novaro-server/src/routes"
+
 	"github.com/casbin/casbin/v2"
 	"github.com/gin-contrib/authz"
 	"github.com/gin-contrib/graceful"
 	"github.com/gin-contrib/logger"
-	"novaro-server/src/routes"
 )
 
 func init() {
@@ -60,6 +62,7 @@ func setupRouter() *graceful.Graceful {
 	v1 := router.Group("/v1", authz.NewAuthorizer(e))
 
 	routes.AddHomeRoutes(v1)
+	routes.AddAuthRoutes(v1)
 	routes.AddOtherRoutes(v1)
 
 	if err := router.RunWithContext(ctx); err != nil && err != context.Canceled {
