@@ -40,8 +40,7 @@ func (c *Collections) BeforeCreate(tx *gorm.DB) error {
 // 获取用户收藏的推文
 func CollectionsTweet(c *Collections) error {
 	ctx := context.Background()
-	rdb := config.RDB
-	pipeline := rdb.Pipeline()
+	pipeline := config.RDB.Pipeline()
 
 	// 将用户添加到推文的收藏集合中
 	key := fmt.Sprintf("tweet:%s:collections", c.PostId)
@@ -72,8 +71,7 @@ func UnCollectionsTweet(c *Collections) error {
 
 	// 删除redis缓存
 	ctx := context.Background()
-	rdb := config.RDB
-	pipeline := rdb.Pipeline()
+	pipeline := config.RDB.Pipeline()
 
 	// 将用户移除推文的收藏集合中
 	key := fmt.Sprintf("tweet:%s:collections", c.PostId)
@@ -97,18 +95,8 @@ func UnCollectionsTweet(c *Collections) error {
 	return err
 }
 
-// 同步到数据库
+// 将记录同步到数据库
 func SyncToDatabase() {
-	//获取计数
-	rdb := config.RDB
-	ctx := context.Background()
-	pipeline := rdb.Pipeline()
-
-	scoreCmd := pipeline.ZScore(ctx, "tweet:collections:count", "1")
-	_, err := pipeline.Exec(ctx)
-	score, err := scoreCmd.Result()
-	log.Println("redis缓存", score)
-
 	messages, err := consumeFromRabbitMQ()
 	if messages == nil || err != nil {
 		log.Println("Failed to consumer from rabbitmq:", err)
@@ -219,9 +207,8 @@ func consumeFromRabbitMQ() ([]queue, error) {
 // 刷新数据
 func loadingData(operations []queue) error {
 
-	db := config.DB
 	// 开始事务
-	err := db.Transaction(func(tx *gorm.DB) error {
+	err := config.DB.Transaction(func(tx *gorm.DB) error {
 		for _, coll := range operations {
 			if coll.Operation == "add" {
 				log.Println("获取到数据", coll.Collections)

@@ -35,8 +35,7 @@ func (u *Users) BeforeCreate(tx *gorm.DB) error {
 }
 
 func UserExists(userId string) (bool, error) {
-	db := config.DB
 	var count int64
-	err := db.Model(&Users{}).Where("id = ?", userId).Count(&count).Error
+	err := config.DB.Model(&Users{}).Where("id = ?", userId).Count(&count).Error
 	return count > 0, err
 }

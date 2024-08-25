@@ -1,7 +1,10 @@
 package model
 
 import (
+	"github.com/google/uuid"
+	"gorm.io/gorm"
 	"novaro-server/config"
+	"strings"
 	"time"
 )
 
@@ -12,12 +15,17 @@ type TagsRecords struct {
 	CreatedAt time.Time `json:"createdAt"`
 }
 
+func (u *TagsRecords) BeforeCreate(tx *gorm.DB) error {
+	u2 := uuid.New()
+	u.Id = strings.ReplaceAll(u2.String(), "-", "")
+	return nil
+}
+
 func (TagsRecords) TableName() string {
 	return "tags_records"
 }
 
 func AddTagsRecords(t *TagsRecords) error {
-	db := config.DB
-	err := db.Create(&t).Error
+	err := config.DB.Create(&t).Error
 	return err
 }

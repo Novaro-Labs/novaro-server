@@ -22,6 +22,7 @@ type Posts struct {
 	CollectionsAmount int       `json:"collectionsAmount"`
 	RepostsAmount     int       `json:"repostsAmount"`
 	CreatedAt         time.Time `json:"createdAt"`
+	OriginalId        string    `json:"originalId"`
 	Tags              []Tags    `json:"tags" gorm:"-"`
 }
 
@@ -41,8 +42,7 @@ func (u *Posts) BeforeCreate(tx *gorm.DB) error {
 }
 
 func GetPostsList(p *PostsQuery) (resp []Posts, err error) {
-	db := config.DB
-	query := db.Model(Posts{})
+	query := config.DB.Model(Posts{})
 
 	if p.UserId != "" {
 		query = query.Where("user_id = ?", p.UserId)
@@ -66,12 +66,10 @@ func GetPostsList(p *PostsQuery) (resp []Posts, err error) {
 }
 
 func GetPostsById(id string) (resp Posts, err error) {
-	db := config.DB
-
 	if id == "" {
 		return resp, errors.New("id is required")
 	}
-	err = db.Table("posts").Where("id = ?", id).Find(&resp).Error
+	err = config.DB.Table("posts").Where("id = ?", id).Find(&resp).Error
 
 	// 处理标签
 	tags, err := GetTagListByPostId(resp.Id)
@@ -80,19 +78,16 @@ func GetPostsById(id string) (resp Posts, err error) {
 }
 
 func PostExists(id string) (bool, error) {
-	db := config.DB
 	var count int64
-	err := db.Model(&Posts{}).Where("id = ?", id).Count(&count).Error
+	err := config.DB.Model(&Posts{}).Where("id = ?", id).Count(&count).Error
 	return count > 0, err
 }
 
 func GetPostsByUserId(userId string) (resp []Posts, err error) {
-	db := config.DB
-
 	if userId == "" {
 		return resp, errors.New("UserId is required")
 	}
-	err = db.Table("posts").Where("user_id = ?", userId).Find(&resp).Error
+	err = config.DB.Table("posts").Where("user_id = ?", userId).Find(&resp).Error
 
 	// 处理标签
 	for i := range resp {
@@ -106,27 +101,32 @@ func GetPostsByUserId(userId string) (resp []Posts, err error) {
 }
 
 func SavePosts(posts *Posts) error {
-	db := config.DB
 	var data = Posts{
-		Id:      posts.Id,
-		UserId:  posts.UserId,
-		Content: posts.Content,
+		Id:         posts.Id,
+		UserId:     posts.UserId,
+		Content:    posts.Content,
+		OriginalId: posts.OriginalId,
 	}
 
-	tx := db.Create(&data)
+	tx := config.DB.Create(&data)
+
+	if data.OriginalId != "" {
+		rdb := config.RDB
+		ctx := context.Background()
+		rdb.ZIncrBy(ctx, "tweet:reposts:count", 1, data.Id)
+	}
+
 	return tx.Error
 }
 
 func UpdatePosts(posts *Posts) error {
-	db := config.DB
-	tx := db.Updates(&posts)
+	tx := config.DB.Updates(&posts)
 	return tx.Error
 }
 
 func UpdatePostsBatch(posts []Posts) error {
-	db := config.DB
 	// 开始事务
-	err := db.Transaction(func(tx *gorm.DB) error {
+	err := config.DB.Transaction(func(tx *gorm.DB) error {
 		for _, post := range posts {
 			// 更新每个 post
 			if err := tx.Model(&post).Updates(Posts{
@@ -145,8 +145,7 @@ func UpdatePostsBatch(posts []Posts) error {
 }
 
 func DelPostsById(id string) error {
-	db := config.DB
-	tx := db.Where("id = ?", id).Delete(&Posts{})
+	tx := config.DB.Where("id = ?", id).Delete(&Posts{})
 	return tx.Error
 }
 
@@ -218,4 +217,100 @@ func processTweet(ctx context.Context, rdb *redis.Client, tweetID string) (Posts
 		RepostsAmount:     int(repost),
 		CommentsAmount:    int(count),
 	}, nil
+}
+func SyncCountToDataBase() {
+	rdb := config.RDB
+	ctx := context.Background()
+
+	// 同步收藏数量
+	collectionsResults, err := rdb.ZRangeWithScores(ctx, "tweet:collections:count", 0, -1).Result()
+	if err != nil {
+		log.Printf("failed to get collection scores: %v", err)
+	}
+
+	// 同步评论数量
+	commentsResults, err := rdb.ZRangeWithScores(ctx, "tweet:comments:count", 0, -1).Result()
+	if err != nil {
+		log.Printf("failed to get comment scores: %v", err)
+	}
+
+	// 同步转发数量
+	repostsResults, err := rdb.ZRangeWithScores(ctx, "tweet:reposts:count", 0, -1).Result()
+	if err != nil {
+		log.Printf("failed to get repost scores: %v", err)
+	}
+
+	var wg sync.WaitGroup
+	errorChan := make(chan error, len(collectionsResults)+len(commentsResults)+len(repostsResults))
+
+	// 处理收藏数量
+	for _, result := range collectionsResults {
+		wg.Add(1)
+		go func(r redis.Z) {
+			defer wg.Done()
+			// 更新收藏数量
+			postId := r.Member.(string)
+
+			err2 := UpdatePosts(&Posts{
+				Id:                postId,
+				CollectionsAmount: int(r.Score),
+			})
+			if err2 != nil {
+				errorChan <- fmt.Errorf("failed to update post %s: %v", postId, err2)
+			}
+
+		}(result)
+	}
+
+	// 处理评论数量
+	for _, result := range commentsResults {
+		wg.Add(1)
+		go func(r redis.Z) {
+			defer wg.Done()
+			// 更新评论数量
+			postId := r.Member.(string)
+
+			err2 := UpdatePosts(&Posts{
+				Id:             postId,
+				CommentsAmount: int(r.Score),
+			})
+
+			if err2 != nil {
+				errorChan <- fmt.Errorf("failed to update post %s: %v", postId, err2)
+			}
+
+		}(result)
+	}
+
+	// 处理转发数量
+	for _, result := range repostsResults {
+		wg.Add(1)
+		go func(r redis.Z) {
+			defer wg.Done()
+			// 更新转发数量
+			postId := r.Member.(string)
+
+			err2 := UpdatePosts(&Posts{
+				Id:            postId,
+				RepostsAmount: int(r.Score),
+			})
+			if err2 != nil {
+				errorChan <- fmt.Errorf("failed to update post %s: %v", postId, err2)
+			}
+		}(result)
+	}
+
+	go func() {
+		wg.Wait()
+		close(errorChan)
+	}()
+
+	var errors []string
+	for err := range errorChan {
+		errors = append(errors, err.Error())
+	}
+
+	if len(errors) > 0 {
+		fmt.Errorf("some updates failed: %s", strings.Join(errors, "; "))
+	}
 }

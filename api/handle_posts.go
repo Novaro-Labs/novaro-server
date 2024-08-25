@@ -10,6 +10,11 @@ type PostsApi struct {
 	Content string `json:"content"`
 }
 
+type RePosts struct {
+	PostsApi   PostsApi
+	OriginalId string `json:"originalId"`
+}
+
 // GetPostsById godoc
 // @Summary Get a post by ID
 // @Description Retrieves a post from the database based on the provided ID
@@ -87,6 +92,31 @@ func (PostsApi) GetPostsList(c *gin.Context) {
 // @Failure 400
 // @Router /v1/api/posts/savePosts [post]
 func (PostsApi) SavePosts(c *gin.Context) {
+	var posts model.Posts
+
+	if err := c.ShouldBindJSON(&posts); err != nil {
+		c.JSON(400, gin.H{"error": err.Error()})
+		return
+	}
+
+	if err := model.SavePosts(&posts); err != nil {
+		c.JSON(400, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(200, posts)
+}
+
+// SavePosts godoc
+// @Summary Save a new repost
+// @Description Creates a new repost in the database
+// @Tags posts
+// @Accept json
+// @Produce json
+// @Param post body RePosts true "Post object"
+// @Success 200 {object} model.Posts
+// @Failure 400
+// @Router /v1/api/posts/saveRePosts [post]
+func (PostsApi) SaveReposts(c *gin.Context) {
 	var posts model.Posts
 
 	if err := c.ShouldBindJSON(&posts); err != nil {

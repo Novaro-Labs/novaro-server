@@ -1,6 +1,7 @@
 package model
 
 import (
+	"context"
 	"fmt"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
@@ -32,19 +33,28 @@ func (u *Comments) BeforeCreate(tx *gorm.DB) error {
 func AddComments(c *Comments) error {
 	db := config.DB
 	tx := db.Create(&c)
+
+	// 用redis来记录评论数量
+	rdb := config.RDB
+	ctx := context.Background()
+	rdb.ZIncrBy(ctx, "tweet:comments:count", 1, c.PostId)
+
 	return tx.Error
 }
 
+func GetCommentsById(id string) (resp Comments, err error) {
+	tx := config.DB.Where("id = ?", id).First(&resp)
+	return resp, tx.Error
+}
+
 func GetCommentsCount(postId string) int64 {
-	db := config.DB
 	var count int64
-	db.Table("comments").Where("post_id = ?", postId).Count(&count)
+	config.DB.Table("comments").Where("post_id = ?", postId).Count(&count)
 	return count
 }
 
 func GetCommentsListByPostId(postId string) (resp []Comments, err error) {
-	db := config.DB
-	err = db.Table("comments").Where("post_id = ?", postId).Find(&resp).Error
+	err = config.DB.Table("comments").Where("post_id = ?", postId).Find(&resp).Error
 	if err != nil {
 		return resp, err
 	}
@@ -56,8 +66,7 @@ func GetCommentsListByParentId(parentId string) (resp []Comments, err error) {
 		return nil, fmt.Errorf("parentId cannot be empty")
 	}
 
-	db := config.DB
-	err = db.Table("comments").Where("parent_id = ?", parentId).Find(&resp).Error
+	err = config.DB.Table("comments").Where("parent_id = ?", parentId).Find(&resp).Error
 	if err != nil {
 		return resp, err
 	}
@@ -73,8 +82,7 @@ func GetCommentsListByParentId(parentId string) (resp []Comments, err error) {
 }
 
 func GetCommentsListByUserId(userId string) (resp []Comments, err error) {
-	db := config.DB
-	err = db.Table("comments").Where("user_id = ?", userId).Find(&resp).Error
+	err = config.DB.Table("comments").Where("user_id = ?", userId).Find(&resp).Error
 	if err != nil {
 		return resp, err
 	}
@@ -82,7 +90,12 @@ func GetCommentsListByUserId(userId string) (resp []Comments, err error) {
 }
 
 func DeleteById(id string) error {
-	db := config.DB
-	tx := db.Table("comments").Where("id = ?", id).Delete(&Comments{})
+	tx := config.DB.Table("comments").Where("id = ?", id).Delete(&Comments{})
+
+	resp, _ := GetCommentsById(id)
+	rdb := config.RDB
+	ctx := context.Background()
+	rdb.ZIncrBy(ctx, "tweet:comments:count", -1, resp.PostId)
+
 	return tx.Error
 }

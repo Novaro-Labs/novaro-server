@@ -9,6 +9,7 @@ import (
 	"github.com/robfig/cron/v3"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
+	"gorm.io/gorm"
 	"novaro-server/config"
 	_ "novaro-server/docs"
 	"novaro-server/model"
@@ -17,31 +18,22 @@ import (
 	"syscall"
 )
 
-func init() {
-	config.Init()
-	db := config.DB
-	db.AutoMigrate(&model.Collections{})
-	db.AutoMigrate(&model.Comments{})
-	db.AutoMigrate(&model.Posts{})
-	db.AutoMigrate(&model.RePosts{})
-	db.AutoMigrate(&model.Tags{})
-	db.AutoMigrate(&model.TagsRecords{})
-	db.AutoMigrate(&model.Users{})
-	db.AutoMigrate(&model.TwitterUser{})
-
-	// 创建 cron 实例
-	c := cron.New()
-	// 添加定时任务：每分钟执行同步
-	c.AddFunc("@every 1m", func() {
-		model.SyncToDatabase()
-	})
-	c.Start()
-}
+var (
+	DB *gorm.DB
+)
 
 func main() {
+
+	err := config.Init()
+	if err != nil {
+		panic(err)
+	}
+	defer config.Close()
+
+	setConfig()
+
 	router := setupRouter()
 	router.Run(":8080")
-
 }
 
 func setupRouter() *graceful.Graceful {
@@ -72,4 +64,29 @@ func setupRouter() *graceful.Graceful {
 		panic(err)
 	}
 	return router
+}
+
+func setConfig() {
+	// 迁移数据库
+	DB = config.DB
+	DB.AutoMigrate(&model.Collections{})
+	DB.AutoMigrate(&model.Comments{})
+	DB.AutoMigrate(&model.Posts{})
+	DB.AutoMigrate(&model.RePosts{})
+	DB.AutoMigrate(&model.Tags{})
+	DB.AutoMigrate(&model.TagsRecords{})
+	DB.AutoMigrate(&model.Users{})
+	DB.AutoMigrate(&model.TwitterUser{})
+
+	// 创建 cron 实例
+	c := cron.New()
+	// 添加定时任务：每分钟执行同步
+	c.AddFunc("@every 5m", func() {
+		model.SyncToDatabase()
+	})
+
+	c.AddFunc("@every 3s", func() {
+		model.SyncCountToDataBase()
+	})
+	c.Start()
 }

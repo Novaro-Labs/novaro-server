@@ -27,6 +27,7 @@ func AddOtherRoutes(r *gin.RouterGroup) {
 		posts.GET("/getPostsByUserId", api.PostsApi{}.GetPostsByUserId)
 		posts.POST("/getPostsList", api.PostsApi{}.GetPostsList)
 		posts.POST("/savePosts", api.PostsApi{}.SavePosts)
+		posts.POST("/saveRePosts", api.PostsApi{}.SavePosts)
 		posts.DELETE("/delPostsById", api.PostsApi{}.DelPostsById)
 	}
 
@@ -37,11 +38,11 @@ func AddOtherRoutes(r *gin.RouterGroup) {
 
 	tags := r.Group("/api/tags")
 	{
-		tags.GET("/getTagsList", api.TagsApi{}.GetTagsList)
+		tags.GET("/list", api.TagsApi{}.GetTagsList)
 	}
 
 	records := r.Group("/api/tags/records")
 	{
-		records.GET("/add", api.TagsRecordsApi{}.AddTagsRecords)
+		records.POST("/add", api.TagsRecordsApi{}.AddTagsRecords)
 	}
 }

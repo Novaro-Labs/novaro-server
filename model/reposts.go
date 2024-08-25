@@ -22,8 +22,7 @@ func (RePosts) TableName() string {
 
 func AddRePosts(c *RePosts) error {
 	ctx := context.Background()
-	rdb := config.RDB
-	pipeline := rdb.Pipeline()
+	pipeline := config.RDB.Pipeline()
 
 	// 将用户添加到推文的转发集合中
 	pipeline.SAdd(ctx, fmt.Sprintf("tweet:%s:reposts", c.PostId), c.UserId)
