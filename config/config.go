@@ -3,6 +3,7 @@ package config
 import (
 	"fmt"
 	"log"
+	"time"
 
 	"github.com/glebarez/sqlite"
 	"github.com/go-redis/redis/v8"
@@ -15,6 +16,8 @@ var DB *gorm.DB
 
 var RDB *redis.Client
 
+var InvitatioCodeExpiration time.Duration
+var InvitatioCodeLength int
 var ClientId string
 var ClientSecret string
 var Proxy string
@@ -22,6 +25,8 @@ var Proxy string
 func Init() {
 	viper.SetConfigName("config")
 	viper.SetConfigType("yaml")
+	viper.SetDefault("invitation_code_expire_hour", "24")
+	viper.SetDefault("invitation_code_length", "8")
 	viper.AddConfigPath(".")
 	var err error
 
@@ -29,7 +34,9 @@ func Init() {
 	if err != nil {            // 处理读取配置文件的错误
 		panic(fmt.Errorf("Fatal error config file: %s \n", err))
 	}
-
+	expire := viper.GetInt("invitation_code_expire_hour")
+	InvitatioCodeExpiration = time.Duration(float64(expire) * float64(time.Hour))
+	InvitatioCodeLength = viper.GetInt("invitation_code_length")
 	ClientId = viper.GetString("client_id")
 	ClientSecret = viper.GetString("client_secret")
 	Proxy = viper.GetString("proxy")

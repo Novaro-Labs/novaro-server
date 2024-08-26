@@ -9,12 +9,14 @@ import (
 	"net"
 	"net/http"
 	"net/url"
+	"novaro-server/auth"
 	"novaro-server/config"
 	"novaro-server/model"
 	"strings"
 	"time"
 
 	"github.com/casbin/casbin/v2/log"
+	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 )
 
@@ -30,10 +32,21 @@ func AddAuthRoutes(rg *gin.RouterGroup) {
 }
 
 func login(c *gin.Context) {
-	redirectUri := redirectUrl(c)
-	codeVerifier := generateCodeVerifier()
+	queryParams := &url.Values{}
+	query := c.Request.URL.Query()
+	if query.Has("icode") {
+		icode := query.Get("icode")
+		if exist, err := model.CheckInvitationCodes(icode); err != nil {
+			c.JSON(500, gin.H{"error": err.Error()})
+			return
+		} else if !exist {
+			c.JSON(400, gin.H{"error": "invalid invitation code"})
+		}
+		queryParams.Add("icode", icode)
+	}
 
-	fmt.Printf("codeVerifier: %v\n", codeVerifier)
+	redirectUri := redirectUrl(c, queryParams)
+	codeVerifier := generateCodeVerifier()
 
 	querys := url.Values{
 		"response_type":         {"code"},
@@ -50,38 +63,63 @@ func login(c *gin.Context) {
 }
 
 func callback(c *gin.Context) {
-	redirectUri := redirectUrl(c)
 	query := c.Request.URL.Query()
 	code := query.Get("code")
-	codeVerifier, _ := url.QueryUnescape(query.Get("state"))
 
+	queryParams := &url.Values{}
+	if query.Has("icode") {
+		invitation_code := query.Get("icode")
+		queryParams.Add("icode", invitation_code)
+	}
+	redirectUri := redirectUrl(c, queryParams)
+
+	codeVerifier, _ := url.QueryUnescape(query.Get("state"))
 	token, err := getToken(code, redirectUri, codeVerifier)
 	if err != nil {
-		c.String(500, err.Error())
+		c.JSON(500, gin.H{"error": err.Error()})
 		return
 	}
 
 	user, err := getUserInfo(token)
 	if err != nil {
-		c.String(500, err.Error())
+		c.JSON(500, gin.H{"error": err.Error()})
 		return
 	}
 
-	err = model.SaveUsers(user.toUsers())
+	err = model.SaveTwitterUsers(user.ToTwitterUsers())
 	if err != nil {
-		c.String(500, err.Error())
+		c.JSON(500, gin.H{"error": err.Error()})
 		return
 	}
+
+	id, err := model.SaveUsers(user.ToUsers())
+	if err != nil {
+		c.JSON(500, gin.H{"error": err.Error()})
+		return
+	}
+
+	session := sessions.Default(c)
+	session.Set(auth.Userkey, id)
+	if err := session.Save(); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save session"})
+		return
+	}
+
 	c.JSON(200, user)
 }
 
-func redirectUrl(c *gin.Context) string {
-	scheme := "http"
-	if c.Request.TLS != nil {
-		scheme = "https"
+func redirectUrl(c *gin.Context, query *url.Values) string {
+	redirectUrl := &url.URL{
+		Scheme:   "http",
+		Host:     c.Request.Host,
+		Path:     "/v1/auth/callback",
+		RawQuery: query.Encode(),
 	}
-	redirectUri := fmt.Sprintf("%s://%s/v1/auth/callback", scheme, c.Request.Host)
-	return redirectUri
+	if c.Request.TLS != nil {
+		redirectUrl.Scheme = "https"
+	}
+
+	return redirectUrl.String()
 }
 
 func getToken(code, redirectUri, codeVerifier string) (string, error) {
@@ -125,7 +163,7 @@ func getToken(code, redirectUri, codeVerifier string) (string, error) {
 	return token.AccessToken, nil
 }
 
-func getUserInfo(token string) (*UserInfo, error) {
+func getUserInfo(token string) (*model.TwitterUserInfo, error) {
 	request, err := http.NewRequest("GET", "https://api.x.com/2/users/me?user.fields=created_at,profile_image_url", nil)
 	if err != nil {
 		log.LogError(err, "new userinfo request error")
@@ -191,23 +229,5 @@ type Token struct {
 }
 
 type UserData struct {
-	Data *UserInfo `json:"data"`
-}
-
-type UserInfo struct {
-	Avatar   string    `json:"profile_image_url"`
-	Name     string    `json:"name"`
-	Created  time.Time `json:"created_at"`
-	Id       string    `json:"id"`
-	Username string    `json:"username"`
-}
-
-func (userInfo *UserInfo) toUsers() *model.Users {
-	users := &model.Users{
-		TwitterId: userInfo.Id,
-		UserName:  userInfo.Username,
-		CreatedAt: userInfo.Created,
-		Avatar:    &userInfo.Avatar,
-	}
-	return users
+	Data *model.TwitterUserInfo `json:"data"`
 }

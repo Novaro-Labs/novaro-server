@@ -240,6 +240,26 @@ const docTemplate = `{
                 }
             }
         },
+        "/v1/api/invitation/codes/add": {
+            "post": {
+                "description": "Generate new invitation codes and save to the system",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "Generate new invitation codes",
+                "responses": {
+                    "200": {
+                        "description": " Successfully generated and saved invitation codes"
+                    },
+                    "500": {
+                        "description": " Error generating and adding invitation codes"
+                    }
+                }
+            }
+        },
         "/v1/api/posts/delPostsById": {
             "delete": {
                 "description": "Delete a post by its ID",

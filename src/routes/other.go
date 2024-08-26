@@ -1,10 +1,11 @@
 package routes
 
 import (
+	"novaro-server/api"
+
 	"github.com/gin-gonic/gin"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
-	"novaro-server/api"
 )
 
 func AddOtherRoutes(r *gin.RouterGroup) {
@@ -46,5 +47,10 @@ func AddOtherRoutes(r *gin.RouterGroup) {
 	records := r.Group("/api/tags/records")
 	{
 		records.GET("/add", api.TagsRecordsApi{}.AddTagsRecords)
+	}
+
+	invitationCodes := r.Group("/api/invitation/codes")
+	{
+		invitationCodes.GET("/add", api.InvitationCodesApi{}.MakeInvitationCodes)
 	}
 }

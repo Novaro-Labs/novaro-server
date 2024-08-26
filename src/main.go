@@ -15,7 +15,11 @@ import (
 	"github.com/gin-contrib/authz"
 	"github.com/gin-contrib/graceful"
 	"github.com/gin-contrib/logger"
+	"github.com/gin-contrib/sessions"
+	"github.com/gin-contrib/sessions/cookie"
 )
+
+var secret = []byte("secret")
 
 func init() {
 	config.Init()
@@ -27,7 +31,7 @@ func init() {
 	db.AutoMigrate(&model.Tags{})
 	db.AutoMigrate(&model.TagsRecords{})
 	db.AutoMigrate(&model.Users{})
-	db.AutoMigrate(&model.TwitterUser{})
+	db.AutoMigrate(&model.TwitterUsers{})
 
 	// 创建 cron 实例
 	c := cron.New()
@@ -54,6 +58,8 @@ func setupRouter() *graceful.Graceful {
 	defer router.Close()
 
 	router.Use(logger.SetLogger())
+
+	router.Use(sessions.Sessions("mysession", cookie.NewStore(secret)))
 
 	e, err := casbin.NewEnforcer()
 	if err != nil {

@@ -2,7 +2,11 @@ package model
 
 import (
 	"novaro-server/config"
+	"strings"
 	"time"
+
+	"github.com/google/uuid"
+	"gorm.io/gorm"
 )
 
 type Users struct {
@@ -25,10 +29,15 @@ func (Users) TableName() string {
 	return "users"
 }
 
-func SaveUsers(users *Users) error {
+func (u *Users) BeforeCreate(tx *gorm.DB) error {
+	u2 := uuid.New()
+	u.Id = strings.ReplaceAll(u2.String(), "-", "")
+	return nil
+}
+
+func SaveUsers(users *Users) (string, error) {
 	db := config.DB
 	var data = Users{
-		Id:              users.Id,
 		TwitterId:       users.TwitterId,
 		UserName:        users.UserName,
 		CreatedAt:       users.CreatedAt,
@@ -37,5 +46,5 @@ func SaveUsers(users *Users) error {
 	}
 
 	tx := db.Create(&data)
-	return tx.Error
+	return data.Id, tx.Error
 }

@@ -229,6 +229,19 @@ paths:
       summary: Get comments by user ID
       tags:
       - comments
+  /v1/api/invitation/codes/add:
+    post:
+      consumes:
+      - application/json
+      description: Generate new invitation codes and save to the system
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ' Successfully generated and saved invitation codes'
+        "500":
+          description: ' Error generating and adding invitation codes'
+      summary: Generate new invitation codes
   /v1/api/posts/delPostsById:
     delete:
       consumes:
