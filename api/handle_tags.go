@@ -13,7 +13,7 @@ type TagsApi struct {
 // @Description Retrieve a list of all tags
 // @Tags tags
 // @Produce json
-// @Success 200 {array} model.Tag "Successful operation"
+// @Success 200 {array} model.Tags "Successful operation"
 // @Failure 400
 // @Router /v1/api/tags/list [get]
 func (TagsApi) GetTagsList(c *gin.Context) {

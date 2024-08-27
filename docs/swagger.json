@@ -365,6 +365,103 @@
                 }
             }
         },
+        "/v1/api/posts/saveRePosts": {
+            "post": {
+                "description": "Creates a new repost in the database",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "posts"
+                ],
+                "summary": "Save a new repost",
+                "parameters": [
+                    {
+                        "description": "Post object",
+                        "name": "post",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/api.RePosts"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/model.Posts"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request"
+                    }
+                }
+            }
+        },
+        "/v1/api/tags/list": {
+            "get": {
+                "description": "Retrieve a list of all tags",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "tags"
+                ],
+                "summary": "Get list of tags",
+                "responses": {
+                    "200": {
+                        "description": "Successful operation",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/model.Tags"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request"
+                    }
+                }
+            }
+        },
+        "/v1/api/tags/records/add": {
+            "post": {
+                "description": "Add new tags records to the database",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "tags-records"
+                ],
+                "summary": "Add new tags records",
+                "parameters": [
+                    {
+                        "description": "Tags records to add",
+                        "name": "tagsRecords",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/api.TagsRecordsApi"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully added tags records"
+                    },
+                    "400": {
+                        "description": "Bad Request"
+                    }
+                }
+            }
+        },
         "/vi/api/collections/add": {
             "post": {
                 "description": "Add a tweet to user's collection",
@@ -478,6 +575,28 @@
                 }
             }
         },
+        "api.RePosts": {
+            "type": "object",
+            "properties": {
+                "originalId": {
+                    "type": "string"
+                },
+                "postsApi": {
+                    "$ref": "#/definitions/api.PostsApi"
+                }
+            }
+        },
+        "api.TagsRecordsApi": {
+            "type": "object",
+            "properties": {
+                "postId": {
+                    "type": "string"
+                },
+                "tagId": {
+                    "type": "string"
+                }
+            }
+        },
         "model.Comments": {
             "type": "object",
             "properties": {
@@ -523,6 +642,9 @@
                     "type": "string"
                 },
                 "id": {
+                    "type": "string"
+                },
+                "originalId": {
                     "type": "string"
                 },
                 "repostsAmount": {
