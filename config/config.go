@@ -15,6 +15,9 @@ var (
 	RDB *redis.Client
 	RBQ *amqp091.Connection
 )
+var ClientId string
+var ClientSecret string
+var Proxy string
 
 func Init() error {
 	viper.SetConfigName("config")
@@ -26,6 +29,10 @@ func Init() error {
 	if err != nil {            // 处理读取配置文件的错误
 		panic(fmt.Errorf("Fatal error config file: %s \n", err))
 	}
+
+	ClientId = viper.GetString("client_id")
+	ClientSecret = viper.GetString("client_secret")
+	Proxy = viper.GetString("proxy")
 
 	// 初始化数据库连接
 	initDB()

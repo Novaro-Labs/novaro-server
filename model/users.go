@@ -33,7 +33,20 @@ func (u *Users) BeforeCreate(tx *gorm.DB) error {
 	u.Id = strings.ReplaceAll(u2.String(), "-", "")
 	return nil
 }
+func SaveUsers(users *Users) error {
+	db := config.DB
+	var data = Users{
+		Id:              users.Id,
+		TwitterId:       users.TwitterId,
+		UserName:        users.UserName,
+		CreatedAt:       users.CreatedAt,
+		Avatar:          users.Avatar,
+		WalletPublicKey: users.WalletPublicKey,
+	}
 
+	tx := db.Create(&data)
+	return tx.Error
+}
 func UserExists(userId string) (bool, error) {
 	var count int64
 	err := config.DB.Model(&Users{}).Where("id = ?", userId).Count(&count).Error
