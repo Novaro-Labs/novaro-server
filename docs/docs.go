@@ -15,80 +15,6 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
-        "/v1/api/collections/add": {
-            "post": {
-                "description": "Add a tweet to user's collections",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "collections"
-                ],
-                "summary": "Collect a tweet",
-                "parameters": [
-                    {
-                        "description": "Collection information",
-                        "name": "collection",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/model.Collections"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/model.Collections"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request"
-                    }
-                }
-            }
-        },
-        "/v1/api/collections/remove": {
-            "delete": {
-                "description": "Remove a tweet from user's collections",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "collections"
-                ],
-                "summary": "Remove a tweet from collections",
-                "parameters": [
-                    {
-                        "description": "Collection information",
-                        "name": "collection",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/model.Collections"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/model.Collections"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request"
-                    }
-                }
-            }
-        },
         "/v1/api/comments/add": {
             "post": {
                 "description": "Add a new comment to the system",
@@ -109,16 +35,45 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/model.Comments"
+                            "$ref": "#/definitions/api.CommentsApi"
                         }
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/model.Comments"
-                        }
+                        "description": "OK"
+                    },
+                    "400": {
+                        "description": "Bad Request"
+                    }
+                }
+            }
+        },
+        "/v1/api/comments/delete": {
+            "delete": {
+                "description": "Deletes a comment from the database based on the provided ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "comments"
+                ],
+                "summary": "Delete a comment by ID",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Comment ID",
+                        "name": "id",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
                     },
                     "400": {
                         "description": "Bad Request"
@@ -218,7 +173,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "User ID",
+                        "description": "UserID",
                         "name": "userId",
                         "in": "query",
                         "required": true
@@ -242,7 +197,7 @@ const docTemplate = `{
         },
         "/v1/api/posts/delPostsById": {
             "delete": {
-                "description": "Delete a post by its ID",
+                "description": "Deletes a post from the database based on the provided ID",
                 "consumes": [
                     "application/json"
                 ],
@@ -274,7 +229,7 @@ const docTemplate = `{
         },
         "/v1/api/posts/getPostsById": {
             "get": {
-                "description": "Retrieve posts based on the provided ID",
+                "description": "Retrieves a post from the database based on the provided ID",
                 "consumes": [
                     "application/json"
                 ],
@@ -284,81 +239,14 @@ const docTemplate = `{
                 "tags": [
                     "posts"
                 ],
-                "summary": "Get posts by ID",
+                "summary": "Get a post by ID",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Posts ID",
+                        "description": "PostID",
                         "name": "id",
                         "in": "query",
                         "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Successfully retrieved post"
-                    },
-                    "400": {
-                        "description": "Error message"
-                    }
-                }
-            }
-        },
-        "/v1/api/posts/getPostsByUserId": {
-            "get": {
-                "description": "Retrieve posts based on the provided UserId",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "posts"
-                ],
-                "summary": "Get posts by UserId",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Posts UserId",
-                        "name": "userId",
-                        "in": "query",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Successfully retrieved post"
-                    },
-                    "400": {
-                        "description": "Error message"
-                    }
-                }
-            }
-        },
-        "/v1/api/posts/getPostsList": {
-            "get": {
-                "description": "Get a list of posts based on query parameters",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "posts"
-                ],
-                "summary": "Get a list of posts",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "name": "id",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "name": "userId",
-                        "in": "query"
                     }
                 ],
                 "responses": {
@@ -374,9 +262,86 @@ const docTemplate = `{
                 }
             }
         },
+        "/v1/api/posts/getPostsByUserId": {
+            "get": {
+                "description": "Retrieves all posts from the database for a specific user",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "posts"
+                ],
+                "summary": "Get posts by user ID",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "UserID",
+                        "name": "userId",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/model.Posts"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request"
+                    }
+                }
+            }
+        },
+        "/v1/api/posts/getPostsList": {
+            "post": {
+                "description": "Retrieves a list of posts based on the provided query parameters",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "posts"
+                ],
+                "summary": "Get a list of posts",
+                "parameters": [
+                    {
+                        "description": "Query parameters",
+                        "name": "query",
+                        "in": "body",
+                        "schema": {
+                            "$ref": "#/definitions/model.PostsQuery"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/model.Posts"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request"
+                    }
+                }
+            }
+        },
         "/v1/api/posts/savePosts": {
             "post": {
-                "description": "Save a new post or update an existing one",
+                "description": "Creates a new post in the database",
                 "consumes": [
                     "application/json"
                 ],
@@ -394,7 +359,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/model.Posts"
+                            "$ref": "#/definitions/api.PostsApi"
                         }
                     }
                 ],
@@ -411,9 +376,9 @@ const docTemplate = `{
                 }
             }
         },
-        "/v1/api/reposts/add": {
+        "/v1/api/posts/saveRePosts": {
             "post": {
-                "description": "Add a new repost to the system",
+                "description": "Creates a new repost in the database",
                 "consumes": [
                     "application/json"
                 ],
@@ -421,23 +386,26 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "reposts"
+                    "posts"
                 ],
-                "summary": "Add a new repost",
+                "summary": "Save a new repost",
                 "parameters": [
                     {
-                        "description": "Repost object",
-                        "name": "repost",
+                        "description": "Post object",
+                        "name": "post",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/model.RePosts"
+                            "$ref": "#/definitions/api.RePosts"
                         }
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": " Successfully added reposts"
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/model.Posts"
+                        }
                     },
                     "400": {
                         "description": "Bad Request"
@@ -445,9 +413,9 @@ const docTemplate = `{
                 }
             }
         },
-        "/v1/api/tags/getTagsList": {
+        "/v1/api/tags/list": {
             "get": {
-                "description": "Retrieve a list of all available tags",
+                "description": "Retrieve a list of all tags",
                 "produces": [
                     "application/json"
                 ],
@@ -457,7 +425,7 @@ const docTemplate = `{
                 "summary": "Get list of tags",
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Successful operation",
                         "schema": {
                             "type": "array",
                             "items": {
@@ -473,7 +441,7 @@ const docTemplate = `{
         },
         "/v1/api/tags/records/add": {
             "post": {
-                "description": "Add new tags records to the system",
+                "description": "Add new tags records to the database",
                 "consumes": [
                     "application/json"
                 ],
@@ -486,37 +454,156 @@ const docTemplate = `{
                 "summary": "Add new tags records",
                 "parameters": [
                     {
-                        "description": "Tags Records object",
+                        "description": "Tags records to add",
                         "name": "tagsRecords",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/model.TagsRecords"
+                            "$ref": "#/definitions/api.TagsRecordsApi"
                         }
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": " Successfully added tags records"
+                        "description": "Successfully added tags records"
                     },
                     "400": {
-                        "description": " Error adding tags records"
+                        "description": "Bad Request"
+                    }
+                }
+            }
+        },
+        "/vi/api/collections/add": {
+            "post": {
+                "description": "Add a tweet to user's collection",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "collections"
+                ],
+                "summary": "Collect a tweet",
+                "parameters": [
+                    {
+                        "description": "Collection information",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/api.CollectionsApi"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "400": {
+                        "description": "Bad Request"
+                    }
+                }
+            }
+        },
+        "/vi/api/collections/remove": {
+            "post": {
+                "description": "Cancel add a tweet to user's collection",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "collections"
+                ],
+                "summary": "Cancel collect a tweet",
+                "parameters": [
+                    {
+                        "description": "Collection information",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/api.CollectionsApi"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "400": {
+                        "description": "Bad Request"
                     }
                 }
             }
         }
     },
     "definitions": {
-        "model.Collections": {
+        "api.CollectionsApi": {
+            "type": "object",
+            "required": [
+                "postId",
+                "userId"
+            ],
+            "properties": {
+                "postId": {
+                    "type": "string"
+                },
+                "userId": {
+                    "type": "string"
+                }
+            }
+        },
+        "api.CommentsApi": {
             "type": "object",
             "properties": {
-                "id": {
+                "content": {
+                    "type": "string"
+                },
+                "parentId": {
                     "type": "string"
                 },
                 "postId": {
                     "type": "string"
                 },
                 "userId": {
+                    "type": "string"
+                }
+            }
+        },
+        "api.PostsApi": {
+            "type": "object",
+            "properties": {
+                "content": {
+                    "type": "string"
+                },
+                "userId": {
+                    "type": "string"
+                }
+            }
+        },
+        "api.RePosts": {
+            "type": "object",
+            "properties": {
+                "originalId": {
+                    "type": "string"
+                },
+                "postsApi": {
+                    "$ref": "#/definitions/api.PostsApi"
+                }
+            }
+        },
+        "api.TagsRecordsApi": {
+            "type": "object",
+            "properties": {
+                "postId": {
+                    "type": "string"
+                },
+                "tagId": {
                     "type": "string"
                 }
             }
@@ -568,6 +655,9 @@ const docTemplate = `{
                 "id": {
                     "type": "string"
                 },
+                "originalId": {
+                    "type": "string"
+                },
                 "repostsAmount": {
                     "type": "integer"
                 },
@@ -582,13 +672,10 @@ const docTemplate = `{
                 }
             }
         },
-        "model.RePosts": {
+        "model.PostsQuery": {
             "type": "object",
             "properties": {
                 "id": {
-                    "type": "string"
-                },
-                "postId": {
                     "type": "string"
                 },
                 "userId": {
@@ -609,23 +696,6 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "tagType": {
-                    "type": "string"
-                }
-            }
-        },
-        "model.TagsRecords": {
-            "type": "object",
-            "properties": {
-                "createdAt": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "string"
-                },
-                "postId": {
-                    "type": "string"
-                },
-                "tagId": {
                     "type": "string"
                 }
             }
