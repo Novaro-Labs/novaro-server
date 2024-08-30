@@ -15,15 +15,18 @@ import (
 )
 
 type Posts struct {
-	Id                string    `json:"id"`
-	UserId            string    `json:"userId"`
-	Content           string    `json:"content"`
-	CommentsAmount    int       `json:"commentsAmount"`
-	CollectionsAmount int       `json:"collectionsAmount"`
-	RepostsAmount     int       `json:"repostsAmount"`
-	CreatedAt         time.Time `json:"createdAt"`
-	OriginalId        string    `json:"originalId"`
-	Tags              []Tags    `json:"tags" gorm:"-"`
+	Id                string      `json:"id"`
+	UserId            string      `json:"userId"`
+	Content           string      `json:"content"`
+	CommentsAmount    int         `json:"commentsAmount"`
+	CollectionsAmount int         `json:"collectionsAmount"`
+	RepostsAmount     int         `json:"repostsAmount"`
+	CreatedAt         time.Time   `json:"createdAt"`
+	OriginalId        string      `json:"originalId"`
+	SourceId          string      `json:"sourceId"`
+	Tags              []Tags      `json:"tags" gorm:"many2many:tags_records;"`
+	PostsImgs         []PostsImgs `json:"postsImgs" gorm:"many2many:posts_imgs;"`
+	IsCollected       bool        `json:"isCollected" gorm:"-"`
 }
 
 func (Posts) TableName() string {
@@ -42,25 +45,47 @@ func (u *Posts) BeforeCreate(tx *gorm.DB) error {
 }
 
 func GetPostsList(p *PostsQuery) (resp []Posts, err error) {
-	query := config.DB.Model(Posts{})
-
-	if p.UserId != "" {
-		query = query.Where("user_id = ?", p.UserId)
-	}
+	query := config.DB.Table("posts")
 	if p.Id != "" {
 		query = query.Where("id = ?", p.Id)
 	}
 
 	err = query.Find(&resp).Error
 
-	// 处理标签
+	var wg sync.WaitGroup
+	// 使用缓冲通道作为信号量来限制并发 goroutine 的数量
+	semaphore := make(chan struct{}, 10) // 最多10个并发 goroutine
+
 	for i := range resp {
-		tags, err := GetTagListByPostId(resp[i].Id)
-		if err != nil {
-			resp[i].Tags = nil
-		}
-		resp[i].Tags = tags
+		wg.Add(1)
+		go func(i int) {
+			defer wg.Done()
+
+			semaphore <- struct{}{}        // 获取信号量
+			defer func() { <-semaphore }() // 释放信号量
+
+			// 检查收藏状态
+			resp[i].IsCollected = CollectionsExist(p.UserId, resp[i].Id)
+
+			// 获取标签
+			tags, err := GetTagListByPostId(resp[i].Id)
+			if err != nil {
+				resp[i].Tags = nil
+			} else {
+				resp[i].Tags = tags
+			}
+
+			source, err2 := GetPostImgsBySourceId(resp[i].SourceId)
+			if err2 != nil {
+				resp[i].PostsImgs = nil
+			} else {
+				resp[i].PostsImgs = source
+			}
+
+		}(i)
 	}
+
+	wg.Wait()
 
 	return resp, err
 }
@@ -106,6 +131,7 @@ func SavePosts(posts *Posts) error {
 		UserId:     posts.UserId,
 		Content:    posts.Content,
 		OriginalId: posts.OriginalId,
+		SourceId:   posts.SourceId,
 	}
 
 	tx := config.DB.Create(&data)
@@ -200,6 +226,7 @@ func SyncData() error {
 	log.Println("Data sync completed")
 	return err
 }
+
 func processTweet(ctx context.Context, rdb *redis.Client, tweetID string) (Posts, error) {
 
 	resp, err := GetPostsById(tweetID)
@@ -218,6 +245,7 @@ func processTweet(ctx context.Context, rdb *redis.Client, tweetID string) (Posts
 		CommentsAmount:    int(count),
 	}, nil
 }
+
 func SyncCountToDataBase() {
 	rdb := config.RDB
 	ctx := context.Background()

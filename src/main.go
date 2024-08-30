@@ -41,6 +41,8 @@ func setupRouter() *graceful.Graceful {
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
 	router, err := graceful.Default()
+	router.Static("/assets", "./assets/")
+
 	if err != nil {
 		panic(err)
 	}
@@ -77,6 +79,7 @@ func setConfig() {
 	DB.AutoMigrate(&model.TagsRecords{})
 	DB.AutoMigrate(&model.Users{})
 	DB.AutoMigrate(&model.TwitterUser{})
+	DB.AutoMigrate(&model.PostsImgs{})
 
 	// 创建 cron 实例
 	c := cron.New()

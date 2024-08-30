@@ -18,6 +18,7 @@ var (
 var ClientId string
 var ClientSecret string
 var Proxy string
+var UploadPath string
 
 func Init() error {
 	viper.SetConfigName("config")
@@ -33,7 +34,7 @@ func Init() error {
 	ClientId = viper.GetString("client_id")
 	ClientSecret = viper.GetString("client_secret")
 	Proxy = viper.GetString("proxy")
-
+	UploadPath = viper.GetString("uploadPath")
 	// 初始化数据库连接
 	initDB()
 

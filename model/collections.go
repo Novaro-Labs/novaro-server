@@ -68,7 +68,6 @@ func CollectionsTweet(c *Collections) error {
 
 // 从收藏中移除推文
 func UnCollectionsTweet(c *Collections) error {
-
 	// 删除redis缓存
 	ctx := context.Background()
 	pipeline := config.RDB.Pipeline()
@@ -93,6 +92,17 @@ func UnCollectionsTweet(c *Collections) error {
 		}
 	}()
 	return err
+}
+
+func CollectionsExist(userId string, postId string) bool {
+	key := fmt.Sprintf("tweet:%s:collections", postId)
+	result, err := config.RDB.SIsMember(context.Background(), key, userId).Result()
+	if err != nil {
+		var count int64
+		config.DB.Model(&Collections{}).Where("user_id = ? and post_id = ?", userId, postId).Count(&count)
+		return count > 0
+	}
+	return result
 }
 
 // 将记录同步到数据库
