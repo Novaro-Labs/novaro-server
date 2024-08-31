@@ -1,6 +1,8 @@
 package model
 
 import (
+	"crypto/rand"
+	"encoding/hex"
 	"novaro-server/config"
 	"strings"
 	"time"
@@ -28,8 +30,27 @@ func (i *InvitationCodes) BeforeCreate(tx *gorm.DB) error {
 	return nil
 }
 
-func SaveInvitationCodes(userId string, code string) error {
+func MakeInvitationCodes(userId string) (*string, *time.Time, error) {
 	db := config.DB
+
+	var code string
+	var err error
+	for {
+		code, err = MakeInvitationCode(config.InvitatioCodeLength)
+		if err != nil {
+			return nil, nil, err
+		}
+
+		exist, err := CheckInvitationCodes(code)
+		if err != nil {
+			return nil, nil, err
+		}
+
+		if !exist {
+			break
+		}
+	}
+
 	var data = InvitationCodes{
 		UserId:    userId,
 		Code:      code,
@@ -38,21 +59,31 @@ func SaveInvitationCodes(userId string, code string) error {
 	}
 
 	tx := db.Create(&data)
-	return tx.Error
+	return &code, &data.ExpiresAt, tx.Error
 }
 
 func CheckInvitationCodes(code string) (bool, error) {
 	db := config.DB
 	var invitationCodes InvitationCodes
 	tx := db.Table("invitation_codes").Where("code = ?", code).Find(&invitationCodes)
-	if tx.RowsAffected == 0 {
-		return false, nil
-	}
 	if tx.Error != nil {
 		return false, tx.Error
+	}
+	if tx.RowsAffected == 0 {
+		return false, nil
 	}
 	if invitationCodes.ExpiresAt.Before(time.Now()) {
 		return false, nil
 	}
 	return true, nil
+}
+
+func MakeInvitationCode(length int) (string, error) {
+	bytes := make([]byte, length)
+	_, err := rand.Read(bytes)
+	if err != nil {
+		return "", err
+	}
+
+	return hex.EncodeToString(bytes)[:length], nil
 }

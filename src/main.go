@@ -32,6 +32,8 @@ func init() {
 	db.AutoMigrate(&model.TagsRecords{})
 	db.AutoMigrate(&model.Users{})
 	db.AutoMigrate(&model.TwitterUsers{})
+	db.AutoMigrate(&model.InvitationCodes{})
+	db.AutoMigrate(&model.Invitations{})
 
 	// 创建 cron 实例
 	c := cron.New()

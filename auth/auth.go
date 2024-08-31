@@ -7,8 +7,13 @@ import (
 
 const Userkey = "user"
 
-func CurrentUser(c *gin.Context) string {
+func CurrentUser(c *gin.Context) *string {
 	session := sessions.Default(c)
 	user := session.Get(Userkey)
-	return user.(string)
+	if user != nil {
+		userId := user.(string)
+		return &userId
+	} else {
+		return nil
+	}
 }

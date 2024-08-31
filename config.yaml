@@ -1,4 +1,6 @@
 env: dev
+invitation_code_expire_day: 7
+invitation_code_length: 8
 client_id: cXZUcmZPcDFJRy1LS1k2SE1vSUs6MTpjaQ
-client_secret: 
-proxy: 
+client_secret: Pjacr7W6MYcApdXQ--0vW_-wAEsOK7abXXDGS82WYACpKfJxFF
+proxy: http://127.0.0.1:7890/

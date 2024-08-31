@@ -41,6 +41,7 @@ func login(c *gin.Context) {
 			return
 		} else if !exist {
 			c.JSON(400, gin.H{"error": "invalid invitation code"})
+			return
 		}
 		queryParams.Add("icode", icode)
 	}

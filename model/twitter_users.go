@@ -19,6 +19,7 @@ func (TwitterUsers) TableName() string {
 
 func SaveTwitterUsers(users *TwitterUsers) error {
 	db := config.DB
+
 	var data = TwitterUsers{
 		TwitterId:        users.TwitterId,
 		TwitterUserName:  users.TwitterUserName,
@@ -26,7 +27,6 @@ func SaveTwitterUsers(users *TwitterUsers) error {
 		TwitterFollowers: users.TwitterFollowers,
 		TwitterCreatedAt: users.TwitterCreatedAt,
 	}
-
-	tx := db.Create(&data)
+	tx := db.Table("twitter_user").Where("twitter_id = ?", users.TwitterId).FirstOrCreate(&data)
 	return tx.Error
 }
