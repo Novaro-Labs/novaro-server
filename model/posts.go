@@ -75,6 +75,7 @@ func GetPostsList(p *PostsQuery) (resp []Posts, err error) {
 				resp[i].Tags = tags
 			}
 
+			// 获取图片
 			source, err2 := GetPostImgsBySourceId(resp[i].SourceId)
 			if err2 != nil {
 				resp[i].PostsImgs = nil

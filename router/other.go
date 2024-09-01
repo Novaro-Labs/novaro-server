@@ -1,9 +1,9 @@
-package routes
+package router
 
 import (
 	"github.com/gin-gonic/gin"
 	"novaro-server/api"
-	"novaro-server/utils/fileutils"
+	"novaro-server/utils"
 )
 
 func AddOtherRoutes(r *gin.RouterGroup) {
@@ -50,7 +50,7 @@ func AddOtherRoutes(r *gin.RouterGroup) {
 	group := r.Group("/upload")
 	{
 		group.POST("/files", func(context *gin.Context) {
-			fileutils.UploadFiles(context.Writer, context.Request)
+			utils.UploadFiles(context.Writer, context.Request)
 		})
 	}
 }

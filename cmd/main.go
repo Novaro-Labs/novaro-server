@@ -7,13 +7,14 @@ import (
 	"github.com/gin-contrib/graceful"
 	"github.com/gin-contrib/logger"
 	"github.com/robfig/cron/v3"
+	"github.com/rs/zerolog/log"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
 	"gorm.io/gorm"
 	"novaro-server/config"
 	_ "novaro-server/docs"
 	"novaro-server/model"
-	"novaro-server/src/routes"
+	routes2 "novaro-server/router"
 	"os/signal"
 	"syscall"
 )
@@ -26,11 +27,13 @@ func main() {
 
 	err := config.Init()
 	if err != nil {
-		panic(err)
+		log.Err(err).Msg("config init error")
+	} else {
+		initCron()
 	}
-	defer config.Close()
 
-	setConfig()
+	defer config.Close()
+	initDB()
 
 	router := setupRouter()
 	router.Run(":8080")
@@ -59,8 +62,8 @@ func setupRouter() *graceful.Graceful {
 
 	v1 := router.Group("/v1", authz.NewAuthorizer(e))
 
-	routes.AddHomeRoutes(v1)
-	routes.AddOtherRoutes(v1)
+	routes2.AddHomeRoutes(v1)
+	routes2.AddOtherRoutes(v1)
 
 	if err := router.RunWithContext(ctx); err != nil && err != context.Canceled {
 		panic(err)
@@ -68,7 +71,7 @@ func setupRouter() *graceful.Graceful {
 	return router
 }
 
-func setConfig() {
+func initDB() {
 	// 迁移数据库
 	DB = config.DB
 	DB.AutoMigrate(&model.Collections{})
@@ -80,7 +83,9 @@ func setConfig() {
 	DB.AutoMigrate(&model.Users{})
 	DB.AutoMigrate(&model.TwitterUser{})
 	DB.AutoMigrate(&model.PostsImgs{})
+}
 
+func initCron() {
 	// 创建 cron 实例
 	c := cron.New()
 	// 添加定时任务：每分钟执行同步

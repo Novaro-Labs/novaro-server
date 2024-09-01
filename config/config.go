@@ -36,15 +36,15 @@ func Init() error {
 	Proxy = viper.GetString("proxy")
 	UploadPath = viper.GetString("uploadPath")
 	// 初始化数据库连接
-	initDB()
+	err = initDB()
 
 	// 初始化 Redis 连接
-	initRedis()
+	err = initRedis()
 
 	// 初始化 RabbitMQ 连接
-	initRabbitMQ()
+	err = initRabbitMQ()
 
-	return nil
+	return err
 }
 
 func initDB() error {
