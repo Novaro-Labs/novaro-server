@@ -6,6 +6,10 @@ import (
 )
 
 type CommentsApi struct {
+	UserId   string `json:"userId"`
+	PostId   string `json:"postId"`
+	ParentId string `json:"parentId"`
+	Content  string `json:"content"`
 }
 
 // AddComments godoc
@@ -14,8 +18,8 @@ type CommentsApi struct {
 // @Tags comments
 // @Accept json
 // @Produce json
-// @Param comment body model.Comments true "Comment object"
-// @Success 200 {object} model.Comments
+// @Param comment body CommentsApi true "Comment object"
+// @Success 200
 // @Failure 400
 // @Router /v1/api/comments/add [post]
 func (CommentsApi) AddComments(c *gin.Context) {
@@ -31,7 +35,7 @@ func (CommentsApi) AddComments(c *gin.Context) {
 		return
 	}
 
-	c.JSON(200, comments)
+	c.JSON(200, gin.H{"msg": "success"})
 }
 
 // GetCommentsListByPostId godoc
@@ -80,7 +84,7 @@ func (CommentsApi) GetCommentsListByParentId(c *gin.Context) {
 // @Tags comments
 // @Accept json
 // @Produce json
-// @Param userId query string true "User ID"
+// @Param userId query string true "UserID"
 // @Success 200 {array} model.Comments
 // @Failure 400
 // @Router /v1/api/comments/getCommentsListByUserId [get]
@@ -92,4 +96,30 @@ func (CommentsApi) GetCommentsListByUserId(c *gin.Context) {
 		return
 	}
 	c.JSON(200, comments)
+}
+
+// DeleteById godoc
+// @Summary Delete a comment by ID
+// @Description Deletes a comment from the database based on the provided ID
+// @Tags comments
+// @Accept json
+// @Produce json
+// @Param id query string true "Comment ID"
+// @Success 200
+// @Failure 400
+// @Router /v1/api/comments/delete [delete]
+func (CommentsApi) DeleteById(c *gin.Context) {
+	id := c.Query("id")
+
+	if id == "" {
+		c.JSON(400, gin.H{"error": "id is required"})
+		return
+	}
+
+	err := model.DeleteById(id)
+	if err != nil {
+		c.JSON(400, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(200, gin.H{"msg": "success"})
 }

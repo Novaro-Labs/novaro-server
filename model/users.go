@@ -10,7 +10,7 @@ import (
 )
 
 type Users struct {
-	Id              string    `json:"id"`
+	Id              string    `json:"id" `
 	TwitterId       string    `json:"twitterID"`
 	UserName        string    `json:"userName"`
 	Avatar          *string   `json:"avatar"`
@@ -49,4 +49,10 @@ func SaveUsers(users *Users) (string, error) {
 	tx := db.Table("users").Where("twitter_id = ?", users.TwitterId).FirstOrCreate(&data)
 
 	return data.Id, tx.Error
+}
+
+func UserExists(userId string) (bool, error) {
+	var count int64
+	err := config.DB.Model(&Users{}).Where("id = ?", userId).Count(&count).Error
+	return count > 0, err
 }

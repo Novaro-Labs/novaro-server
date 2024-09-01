@@ -21,3 +21,10 @@ Get the cookie after you login
 ### Check the exist invitation codes
 
 invitation_codes table in the db
+
+
+1.运行
+```
+go mod tidy
+go run src/main.go | tee out.log
+```
