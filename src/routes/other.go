@@ -1,8 +1,9 @@
 package routes
 
 import (
-	"github.com/gin-gonic/gin"
 	"novaro-server/api"
+
+	"github.com/gin-gonic/gin"
 )
 
 func AddOtherRoutes(r *gin.RouterGroup) {
@@ -44,5 +45,10 @@ func AddOtherRoutes(r *gin.RouterGroup) {
 	records := r.Group("/api/tags/records")
 	{
 		records.POST("/add", api.TagsRecordsApi{}.AddTagsRecords)
+	}
+
+	invitationCodes := r.Group("/api/invitation/codes")
+	{
+		invitationCodes.GET("/add", api.InvitationCodesApi{}.MakeInvitationCodes)
 	}
 }

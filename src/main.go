@@ -2,28 +2,31 @@ package main
 
 import (
 	"context"
-	"github.com/casbin/casbin/v2"
-	"github.com/gin-contrib/authz"
-	"github.com/gin-contrib/graceful"
-	"github.com/gin-contrib/logger"
-	"github.com/robfig/cron/v3"
-	swaggerFiles "github.com/swaggo/files"
-	ginSwagger "github.com/swaggo/gin-swagger"
-	"gorm.io/gorm"
 	"novaro-server/config"
 	_ "novaro-server/docs"
 	"novaro-server/model"
 	"novaro-server/src/routes"
 	"os/signal"
 	"syscall"
+
+	"github.com/casbin/casbin/v2"
+	"github.com/gin-contrib/authz"
+	"github.com/gin-contrib/graceful"
+	"github.com/gin-contrib/logger"
+	"github.com/gin-contrib/sessions"
+	"github.com/gin-contrib/sessions/cookie"
+	"github.com/robfig/cron/v3"
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
+	"gorm.io/gorm"
 )
 
 var (
-	DB *gorm.DB
+	DB     *gorm.DB
+	secret = []byte("secret")
 )
 
 func main() {
-
 	err := config.Init()
 	if err != nil {
 		panic(err)
@@ -37,7 +40,6 @@ func main() {
 }
 
 func setupRouter() *graceful.Graceful {
-
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
 	router, err := graceful.Default()
@@ -47,6 +49,8 @@ func setupRouter() *graceful.Graceful {
 
 	defer router.Close()
 	router.Use(logger.SetLogger())
+
+	router.Use(sessions.Sessions("mysession", cookie.NewStore(secret)))
 
 	e, err := casbin.NewEnforcer()
 	if err != nil {
@@ -58,6 +62,7 @@ func setupRouter() *graceful.Graceful {
 	v1 := router.Group("/v1", authz.NewAuthorizer(e))
 
 	routes.AddHomeRoutes(v1)
+	routes.AddAuthRoutes(v1)
 	routes.AddOtherRoutes(v1)
 
 	if err := router.RunWithContext(ctx); err != nil && err != context.Canceled {
@@ -76,7 +81,9 @@ func setConfig() {
 	DB.AutoMigrate(&model.Tags{})
 	DB.AutoMigrate(&model.TagsRecords{})
 	DB.AutoMigrate(&model.Users{})
-	DB.AutoMigrate(&model.TwitterUser{})
+	DB.AutoMigrate(&model.TwitterUsers{})
+	DB.AutoMigrate(&model.InvitationCodes{})
+	DB.AutoMigrate(&model.Invitations{})
 
 	// 创建 cron 实例
 	c := cron.New()

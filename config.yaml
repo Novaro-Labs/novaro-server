@@ -1,4 +1,6 @@
 env: dev
+invitation_code_expire_day: 7
+invitation_code_length: 8
 client_id: cXZUcmZPcDFJRy1LS1k2SE1vSUs6MTpjaQ
 client_secret: 
 proxy: 
