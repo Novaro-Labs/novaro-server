@@ -7,26 +7,26 @@ import (
 	"time"
 )
 
-type PostsImgs struct {
+type Imgs struct {
 	Id        string    `json:"id" `
 	Path      string    `json:"path"`
 	SourceId  string    `json:"sourceId"`
 	CreatedAt time.Time `json:"createdAt"`
 }
 
-func (PostsImgs) TableName() string {
-	return "posts_imgs"
+func (Imgs) TableName() string {
+	return "imgs"
 }
 func UploadFile(path string, sourceId string) error {
-	tx := config.DB.Create(&PostsImgs{
+	tx := config.DB.Create(&Imgs{
 		Path:     path,
 		SourceId: sourceId,
 		Id:       strings.ReplaceAll(uuid.New().String(), "-", ""),
 	})
 	return tx.Error
 }
-func GetPostImgsBySourceId(sourceId string) ([]PostsImgs, error) {
-	var postsImgs []PostsImgs
+func GetImgsBySourceId(sourceId string) ([]Imgs, error) {
+	var postsImgs []Imgs
 	tx := config.DB.Where("source_id = ?", sourceId).Find(&postsImgs)
 	return postsImgs, tx.Error
 }

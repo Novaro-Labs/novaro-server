@@ -9,48 +9,65 @@ import (
 func AddOtherRoutes(r *gin.RouterGroup) {
 	collections := r.Group("/api/collections")
 	{
-		collections.POST("/add", api.CollectionsApi{}.CollectionsTweet)
-		collections.POST("/remove", api.CollectionsApi{}.UnCollectionsTweet)
+		collectionsApi := api.CollectionsApi{}
+
+		collections.POST("/add", collectionsApi.CollectionsTweet)
+		collections.POST("/remove", collectionsApi.UnCollectionsTweet)
 	}
 
 	comments := r.Group("/api/comments")
 	{
-		comments.GET("/getCommentsListByPostId", api.CommentsApi{}.GetCommentsListByPostId)
-		comments.GET("/getCommentsListByParentId", api.CommentsApi{}.GetCommentsListByParentId)
-		comments.GET("/getCommentsListByUserId", api.CommentsApi{}.GetCommentsListByUserId)
-		comments.POST("/add", api.CommentsApi{}.AddComments)
-		comments.DELETE("/delete", api.CommentsApi{}.DeleteById)
+		commentsApi := api.CommentsApi{}
+		comments.GET("/getCommentsListByPostId", commentsApi.GetCommentsListByPostId)
+		comments.GET("/getCommentsListByParentId", commentsApi.GetCommentsListByParentId)
+		comments.GET("/getCommentsListByUserId", commentsApi.GetCommentsListByUserId)
+		comments.POST("/add", commentsApi.AddComments)
+		comments.DELETE("/delete", commentsApi.DeleteById)
 	}
 
 	posts := r.Group("/api/posts")
 	{
-		posts.GET("/getPostsById", api.PostsApi{}.GetPostsById)
-		posts.GET("/getPostsByUserId", api.PostsApi{}.GetPostsByUserId)
-		posts.POST("/getPostsList", api.PostsApi{}.GetPostsList)
-		posts.POST("/savePosts", api.PostsApi{}.SavePosts)
-		posts.POST("/saveRePosts", api.PostsApi{}.SavePosts)
-		posts.DELETE("/delPostsById", api.PostsApi{}.DelPostsById)
+		postsApi := api.PostsApi{}
+		posts.GET("/getPostsById", postsApi.GetPostsById)
+		posts.GET("/getPostsByUserId", postsApi.GetPostsByUserId)
+		posts.POST("/getPostsList", postsApi.GetPostsList)
+		posts.POST("/savePosts", postsApi.SavePosts)
+		posts.POST("/saveRePosts", postsApi.SavePosts)
+		posts.DELETE("/delPostsById", postsApi.DelPostsById)
 	}
 
 	reposts := r.Group("/api/reposts")
 	{
-		reposts.POST("/add", api.RePostsApi{}.AddRePosts)
+		postsApi := api.RePostsApi{}
+		reposts.POST("/add", postsApi.AddRePosts)
 	}
 
 	tags := r.Group("/api/tags")
 	{
-		tags.GET("/list", api.TagsApi{}.GetTagsList)
+		tagsApi := api.TagsApi{}
+		tags.GET("/list", tagsApi.GetTagsList)
 	}
 
 	records := r.Group("/api/tags/records")
 	{
-		records.POST("/add", api.TagsRecordsApi{}.AddTagsRecords)
+		recordsApi := api.TagsRecordsApi{}
+		records.POST("/add", recordsApi.AddTagsRecords)
 	}
 
-	group := r.Group("/upload")
+	files := r.Group("/upload")
 	{
-		group.POST("/files", func(context *gin.Context) {
+		files.POST("/files", func(context *gin.Context) {
 			utils.UploadFiles(context.Writer, context.Request)
 		})
+
+	}
+
+	events := r.Group("/api/event")
+	{
+		eventsApi := api.EventsApi{}
+		events.POST("/add", eventsApi.CreateEvents)
+		events.DELETE("/delete", eventsApi.DeleteEvents)
+		events.PUT("/update", eventsApi.UpdateEvents)
+		events.POST("/list", eventsApi.GetList)
 	}
 }

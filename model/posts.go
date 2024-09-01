@@ -15,18 +15,18 @@ import (
 )
 
 type Posts struct {
-	Id                string      `json:"id"`
-	UserId            string      `json:"userId"`
-	Content           string      `json:"content"`
-	CommentsAmount    int         `json:"commentsAmount"`
-	CollectionsAmount int         `json:"collectionsAmount"`
-	RepostsAmount     int         `json:"repostsAmount"`
-	CreatedAt         time.Time   `json:"createdAt"`
-	OriginalId        string      `json:"originalId"`
-	SourceId          string      `json:"sourceId"`
-	Tags              []Tags      `json:"tags" gorm:"many2many:tags_records;"`
-	PostsImgs         []PostsImgs `json:"postsImgs" gorm:"many2many:posts_imgs;"`
-	IsCollected       bool        `json:"isCollected" gorm:"-"`
+	Id                string    `json:"id"`
+	UserId            string    `json:"userId"`
+	Content           string    `json:"content"`
+	CommentsAmount    int       `json:"commentsAmount"`
+	CollectionsAmount int       `json:"collectionsAmount"`
+	RepostsAmount     int       `json:"repostsAmount"`
+	CreatedAt         time.Time `json:"createdAt"`
+	OriginalId        string    `json:"originalId"`
+	SourceId          string    `json:"sourceId"`
+	Tags              []Tags    `json:"tags" gorm:"-"`
+	Imgs              []Imgs    `json:"Imgs" gorm:"-"`
+	IsCollected       bool      `json:"isCollected" gorm:"-"`
 }
 
 func (Posts) TableName() string {
@@ -76,11 +76,11 @@ func GetPostsList(p *PostsQuery) (resp []Posts, err error) {
 			}
 
 			// 获取图片
-			source, err2 := GetPostImgsBySourceId(resp[i].SourceId)
+			source, err2 := GetImgsBySourceId(resp[i].SourceId)
 			if err2 != nil {
-				resp[i].PostsImgs = nil
+				resp[i].Imgs = nil
 			} else {
-				resp[i].PostsImgs = source
+				resp[i].Imgs = source
 			}
 
 		}(i)

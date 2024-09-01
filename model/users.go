@@ -33,6 +33,7 @@ func (u *Users) BeforeCreate(tx *gorm.DB) error {
 	u.Id = strings.ReplaceAll(u2.String(), "-", "")
 	return nil
 }
+
 func SaveUsers(users *Users) error {
 	db := config.DB
 	var data = Users{
@@ -47,6 +48,7 @@ func SaveUsers(users *Users) error {
 	tx := db.Create(&data)
 	return tx.Error
 }
+
 func UserExists(userId string) (bool, error) {
 	var count int64
 	err := config.DB.Model(&Users{}).Where("id = ?", userId).Count(&count).Error

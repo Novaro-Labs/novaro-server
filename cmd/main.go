@@ -82,7 +82,8 @@ func initDB() {
 	DB.AutoMigrate(&model.TagsRecords{})
 	DB.AutoMigrate(&model.Users{})
 	DB.AutoMigrate(&model.TwitterUser{})
-	DB.AutoMigrate(&model.PostsImgs{})
+	DB.AutoMigrate(&model.Imgs{})
+	DB.AutoMigrate(&model.Events{})
 }
 
 func initCron() {

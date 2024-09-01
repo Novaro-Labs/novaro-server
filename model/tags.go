@@ -13,7 +13,7 @@ type Tags struct {
 	TagType   string    `json:"tagType"`
 	TagColor  string    `json:"tagColor"`
 	CreatedAt time.Time `json:"createdAt"`
-	Posts     []Posts   `json:"posts" gorm:"many2many:tags_records;"`
+	Posts     []Posts   `json:"posts" gorm:"-"`
 }
 
 func (u *Tags) BeforeCreate(tx *gorm.DB) error {
