@@ -53,6 +53,10 @@ func AddOtherRoutes(r *gin.RouterGroup) {
 		recordsApi := api.TagsRecordsApi{}
 		records.POST("/add", recordsApi.AddTagsRecords)
 	}
+	invitationCodes := r.Group("/api/invitation/codes")
+	{
+		invitationCodes.GET("/add", api.InvitationCodesApi{}.MakeInvitationCodes)
+	}
 
 	files := r.Group("/upload")
 	{

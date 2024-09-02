@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 
-
 	"github.com/casbin/casbin/v2"
 	"github.com/gin-contrib/authz"
 	"github.com/gin-contrib/graceful"
@@ -56,7 +55,6 @@ func setupRouter() *graceful.Graceful {
 
 	defer router.Close()
 	router.Use(logger.SetLogger())
-
 	router.Use(sessions.Sessions("mysession", cookie.NewStore(secret)))
 
 	e, err := casbin.NewEnforcer()
