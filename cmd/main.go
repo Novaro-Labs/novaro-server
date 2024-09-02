@@ -2,10 +2,14 @@ package main
 
 import (
 	"context"
+
+
 	"github.com/casbin/casbin/v2"
 	"github.com/gin-contrib/authz"
 	"github.com/gin-contrib/graceful"
 	"github.com/gin-contrib/logger"
+	"github.com/gin-contrib/sessions"
+	"github.com/gin-contrib/sessions/cookie"
 	"github.com/robfig/cron/v3"
 	"github.com/rs/zerolog/log"
 	swaggerFiles "github.com/swaggo/files"
@@ -14,13 +18,14 @@ import (
 	"novaro-server/config"
 	_ "novaro-server/docs"
 	"novaro-server/model"
-	routes2 "novaro-server/router"
+	routes "novaro-server/router"
 	"os/signal"
 	"syscall"
 )
 
 var (
-	DB *gorm.DB
+	DB     *gorm.DB
+	secret = []byte("secret")
 )
 
 func main() {
@@ -31,7 +36,6 @@ func main() {
 	} else {
 		initCron()
 	}
-
 	defer config.Close()
 	initDB()
 
@@ -53,6 +57,8 @@ func setupRouter() *graceful.Graceful {
 	defer router.Close()
 	router.Use(logger.SetLogger())
 
+	router.Use(sessions.Sessions("mysession", cookie.NewStore(secret)))
+
 	e, err := casbin.NewEnforcer()
 	if err != nil {
 		panic(err)
@@ -62,8 +68,9 @@ func setupRouter() *graceful.Graceful {
 
 	v1 := router.Group("/v1", authz.NewAuthorizer(e))
 
-	routes2.AddHomeRoutes(v1)
-	routes2.AddOtherRoutes(v1)
+	routes.AddHomeRoutes(v1)
+	routes.AddAuthRoutes(v1)
+	routes.AddOtherRoutes(v1)
 
 	if err := router.RunWithContext(ctx); err != nil && err != context.Canceled {
 		panic(err)
@@ -81,7 +88,9 @@ func initDB() {
 	DB.AutoMigrate(&model.Tags{})
 	DB.AutoMigrate(&model.TagsRecords{})
 	DB.AutoMigrate(&model.Users{})
-	DB.AutoMigrate(&model.TwitterUser{})
+	DB.AutoMigrate(&model.TwitterUsers{})
+	DB.AutoMigrate(&model.InvitationCodes{})
+	DB.AutoMigrate(&model.Invitations{})
 	DB.AutoMigrate(&model.Imgs{})
 	DB.AutoMigrate(&model.Events{})
 }

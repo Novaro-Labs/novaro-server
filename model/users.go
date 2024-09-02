@@ -34,10 +34,9 @@ func (u *Users) BeforeCreate(tx *gorm.DB) error {
 	return nil
 }
 
-func SaveUsers(users *Users) error {
+func SaveUsers(users *Users) (string, error) {
 	db := config.DB
 	var data = Users{
-		Id:              users.Id,
 		TwitterId:       users.TwitterId,
 		UserName:        users.UserName,
 		CreatedAt:       users.CreatedAt,
@@ -45,8 +44,9 @@ func SaveUsers(users *Users) error {
 		WalletPublicKey: users.WalletPublicKey,
 	}
 
-	tx := db.Create(&data)
-	return tx.Error
+	tx := db.Table("users").Where("twitter_id = ?", users.TwitterId).FirstOrCreate(&data)
+
+	return data.Id, tx.Error
 }
 
 func UserExists(userId string) (bool, error) {
