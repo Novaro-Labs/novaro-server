@@ -33,7 +33,6 @@ func TestCollectionsTweet(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer resp.Body.Close()
-
 }
 
 func TestCollectionsTweetRm(t *testing.T) {

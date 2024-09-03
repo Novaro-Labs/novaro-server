@@ -1,7 +1,6 @@
 package model
 
 import (
-	"novaro-server/config"
 	"strings"
 	"time"
 
@@ -25,17 +24,4 @@ func (i *Invitations) BeforeCreate(tx *gorm.DB) error {
 	u2 := uuid.New()
 	i.Id = strings.ReplaceAll(u2.String(), "-", "")
 	return nil
-}
-
-func SaveInvitations(invitations *Invitations) error {
-	db := config.DB
-	var data = Invitations{
-		InviterId:      invitations.InviterId,
-		InviteeId:      invitations.InviteeId,
-		InvitationCode: invitations.InvitationCode,
-		InvitedAt:      invitations.InvitedAt,
-	}
-
-	tx := db.Create(&data)
-	return tx.Error
 }

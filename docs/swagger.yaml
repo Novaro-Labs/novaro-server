@@ -1,14 +1,4 @@
 definitions:
-  api.CollectionsApi:
-    properties:
-      postId:
-        type: string
-      userId:
-        type: string
-    required:
-    - postId
-    - userId
-    type: object
   api.CommentsApi:
     properties:
       content:
@@ -60,8 +50,23 @@ definitions:
       userId:
         type: string
     type: object
+  model.Imgs:
+    properties:
+      createdAt:
+        type: string
+      id:
+        type: string
+      path:
+        type: string
+      sourceId:
+        type: string
+    type: object
   model.Posts:
     properties:
+      Imgs:
+        items:
+          $ref: '#/definitions/model.Imgs'
+        type: array
       collectionsAmount:
         type: integer
       commentsAmount:
@@ -72,10 +77,14 @@ definitions:
         type: string
       id:
         type: string
+      isCollected:
+        type: boolean
       originalId:
         type: string
       repostsAmount:
         type: integer
+      sourceId:
+        type: string
       tags:
         items:
           $ref: '#/definitions/model.Tags'
@@ -96,6 +105,10 @@ definitions:
         type: string
       id:
         type: string
+      posts:
+        items:
+          $ref: '#/definitions/model.Posts'
+        type: array
       tagColor:
         type: string
       tagType:
@@ -416,48 +429,4 @@ paths:
       summary: Add new tags records
       tags:
       - tags-records
-  /vi/api/collections/add:
-    post:
-      consumes:
-      - application/json
-      description: Add a tweet to user's collection
-      parameters:
-      - description: Collection information
-        in: body
-        name: body
-        required: true
-        schema:
-          $ref: '#/definitions/api.CollectionsApi'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-        "400":
-          description: Bad Request
-      summary: Collect a tweet
-      tags:
-      - collections
-  /vi/api/collections/remove:
-    post:
-      consumes:
-      - application/json
-      description: Cancel add a tweet to user's collection
-      parameters:
-      - description: Collection information
-        in: body
-        name: body
-        required: true
-        schema:
-          $ref: '#/definitions/api.CollectionsApi'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-        "400":
-          description: Bad Request
-      summary: Cancel collect a tweet
-      tags:
-      - collections
 swagger: "2.0"
