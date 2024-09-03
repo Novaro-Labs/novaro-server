@@ -2,28 +2,23 @@ package main
 
 import (
 	"context"
-
 	"github.com/casbin/casbin/v2"
 	"github.com/gin-contrib/authz"
 	"github.com/gin-contrib/graceful"
 	"github.com/gin-contrib/logger"
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-contrib/sessions/cookie"
-	"github.com/robfig/cron/v3"
 	"github.com/rs/zerolog/log"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
-	"gorm.io/gorm"
 	"novaro-server/config"
 	_ "novaro-server/docs"
-	"novaro-server/model"
 	routes "novaro-server/router"
 	"os/signal"
 	"syscall"
 )
 
 var (
-	DB     *gorm.DB
 	secret = []byte("secret")
 )
 
@@ -32,12 +27,8 @@ func main() {
 	err := config.Init()
 	if err != nil {
 		log.Err(err).Msg("config init error")
-	} else {
-		initCron()
 	}
 	defer config.Close()
-	initDB()
-
 	router := setupRouter()
 	router.Run(":8080")
 }
@@ -74,35 +65,4 @@ func setupRouter() *graceful.Graceful {
 		panic(err)
 	}
 	return router
-}
-
-func initDB() {
-	// 迁移数据库
-	DB = config.DB
-	DB.AutoMigrate(&model.Collections{})
-	DB.AutoMigrate(&model.Comments{})
-	DB.AutoMigrate(&model.Posts{})
-	DB.AutoMigrate(&model.RePosts{})
-	DB.AutoMigrate(&model.Tags{})
-	DB.AutoMigrate(&model.TagsRecords{})
-	DB.AutoMigrate(&model.Users{})
-	DB.AutoMigrate(&model.TwitterUsers{})
-	DB.AutoMigrate(&model.InvitationCodes{})
-	DB.AutoMigrate(&model.Invitations{})
-	DB.AutoMigrate(&model.Imgs{})
-	DB.AutoMigrate(&model.Events{})
-}
-
-func initCron() {
-	// 创建 cron 实例
-	c := cron.New()
-	// 添加定时任务：每分钟执行同步
-	c.AddFunc("@every 5m", func() {
-		model.SyncToDatabase()
-	})
-
-	c.AddFunc("@every 3s", func() {
-		model.SyncCountToDataBase()
-	})
-	c.Start()
 }

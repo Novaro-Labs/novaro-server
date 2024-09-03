@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"novaro-server/model"
 	"time"
 
 	"github.com/glebarez/sqlite"
@@ -21,9 +22,8 @@ var (
 	ClientId                string
 	ClientSecret            string
 	Proxy                   string
-	UploadPath 				string
+	UploadPath              string
 )
-
 
 func Init() error {
 	viper.SetConfigName("config")
@@ -76,6 +76,21 @@ func initDB() error {
 	if err != nil {
 		return fmt.Errorf("数据库连接失败: %w", err)
 	}
+
+	// 迁移数据库
+	DB.AutoMigrate(&model.Collections{})
+	DB.AutoMigrate(&model.Comments{})
+	DB.AutoMigrate(&model.Posts{})
+	DB.AutoMigrate(&model.RePosts{})
+	DB.AutoMigrate(&model.Tags{})
+	DB.AutoMigrate(&model.TagsRecords{})
+	DB.AutoMigrate(&model.Users{})
+	DB.AutoMigrate(&model.TwitterUsers{})
+	DB.AutoMigrate(&model.InvitationCodes{})
+	DB.AutoMigrate(&model.Invitations{})
+	DB.AutoMigrate(&model.Imgs{})
+	DB.AutoMigrate(&model.Events{})
+
 	return nil
 }
 

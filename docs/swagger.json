@@ -481,92 +481,9 @@
                     }
                 }
             }
-        },
-        "/vi/api/collections/add": {
-            "post": {
-                "description": "Add a tweet to user's collection",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "collections"
-                ],
-                "summary": "Collect a tweet",
-                "parameters": [
-                    {
-                        "description": "Collection information",
-                        "name": "body",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/api.CollectionsApi"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK"
-                    },
-                    "400": {
-                        "description": "Bad Request"
-                    }
-                }
-            }
-        },
-        "/vi/api/collections/remove": {
-            "post": {
-                "description": "Cancel add a tweet to user's collection",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "collections"
-                ],
-                "summary": "Cancel collect a tweet",
-                "parameters": [
-                    {
-                        "description": "Collection information",
-                        "name": "body",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/api.CollectionsApi"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK"
-                    },
-                    "400": {
-                        "description": "Bad Request"
-                    }
-                }
-            }
         }
     },
     "definitions": {
-        "api.CollectionsApi": {
-            "type": "object",
-            "required": [
-                "postId",
-                "userId"
-            ],
-            "properties": {
-                "postId": {
-                    "type": "string"
-                },
-                "userId": {
-                    "type": "string"
-                }
-            }
-        },
         "api.CommentsApi": {
             "type": "object",
             "properties": {
@@ -646,9 +563,32 @@
                 }
             }
         },
+        "model.Imgs": {
+            "type": "object",
+            "properties": {
+                "createdAt": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "path": {
+                    "type": "string"
+                },
+                "sourceId": {
+                    "type": "string"
+                }
+            }
+        },
         "model.Posts": {
             "type": "object",
             "properties": {
+                "Imgs": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.Imgs"
+                    }
+                },
                 "collectionsAmount": {
                     "type": "integer"
                 },
@@ -664,11 +604,17 @@
                 "id": {
                     "type": "string"
                 },
+                "isCollected": {
+                    "type": "boolean"
+                },
                 "originalId": {
                     "type": "string"
                 },
                 "repostsAmount": {
                     "type": "integer"
+                },
+                "sourceId": {
+                    "type": "string"
                 },
                 "tags": {
                     "type": "array",
@@ -700,6 +646,12 @@
                 },
                 "id": {
                     "type": "string"
+                },
+                "posts": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.Posts"
+                    }
                 },
                 "tagColor": {
                     "type": "string"

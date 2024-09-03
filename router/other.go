@@ -7,17 +7,25 @@ import (
 )
 
 func AddOtherRoutes(r *gin.RouterGroup) {
+
+	cron := utils.NewCronManager()
+
 	collections := r.Group("/api/collections")
 	{
-		collectionsApi := api.CollectionsApi{}
+		collectionsApi := api.NewCollectionsApi()
 
-		collections.POST("/add", collectionsApi.CollectionsTweet)
-		collections.POST("/remove", collectionsApi.UnCollectionsTweet)
+		// 定时器
+		cron.AddJob("@every 5m", func() {
+			collectionsApi.Sync()
+		})
+
+		collections.POST("/add", collectionsApi.Create)
 	}
 
 	comments := r.Group("/api/comments")
 	{
-		commentsApi := api.CommentsApi{}
+		commentsApi := api.NewCommentApi()
+
 		comments.GET("/getCommentsListByPostId", commentsApi.GetCommentsListByPostId)
 		comments.GET("/getCommentsListByParentId", commentsApi.GetCommentsListByParentId)
 		comments.GET("/getCommentsListByUserId", commentsApi.GetCommentsListByUserId)
@@ -27,7 +35,12 @@ func AddOtherRoutes(r *gin.RouterGroup) {
 
 	posts := r.Group("/api/posts")
 	{
-		postsApi := api.PostsApi{}
+		postsApi := api.NewPostsApi()
+
+		cron.AddJob("@every 3s", func() {
+			postsApi.SyncData()
+		})
+
 		posts.GET("/getPostsById", postsApi.GetPostsById)
 		posts.GET("/getPostsByUserId", postsApi.GetPostsByUserId)
 		posts.POST("/getPostsList", postsApi.GetPostsList)
@@ -38,24 +51,26 @@ func AddOtherRoutes(r *gin.RouterGroup) {
 
 	reposts := r.Group("/api/reposts")
 	{
-		postsApi := api.RePostsApi{}
+		postsApi := api.NewRePostApi()
 		reposts.POST("/add", postsApi.AddRePosts)
 	}
 
 	tags := r.Group("/api/tags")
 	{
-		tagsApi := api.TagsApi{}
+		tagsApi := api.NewTagsApi()
 		tags.GET("/list", tagsApi.GetTagsList)
 	}
 
 	records := r.Group("/api/tags/records")
 	{
-		recordsApi := api.TagsRecordsApi{}
+
+		recordsApi := api.NewTagsRecordApi()
 		records.POST("/add", recordsApi.AddTagsRecords)
 	}
 	invitationCodes := r.Group("/api/invitation/codes")
 	{
-		invitationCodes.GET("/add", api.InvitationCodesApi{}.MakeInvitationCodes)
+		invitationCodesApi := api.NewInvitationCodesApi()
+		invitationCodes.GET("/add", invitationCodesApi.MakeInvitationCodes)
 	}
 
 	files := r.Group("/upload")
@@ -68,10 +83,12 @@ func AddOtherRoutes(r *gin.RouterGroup) {
 
 	events := r.Group("/api/event")
 	{
-		eventsApi := api.EventsApi{}
+		eventsApi := api.NewEventApi()
 		events.POST("/add", eventsApi.CreateEvents)
 		events.DELETE("/delete", eventsApi.DeleteEvents)
 		events.PUT("/update", eventsApi.UpdateEvents)
 		events.POST("/list", eventsApi.GetList)
 	}
+
+	cron.Start()
 }

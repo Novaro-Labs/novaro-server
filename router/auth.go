@@ -12,6 +12,7 @@ import (
 	"novaro-server/auth"
 	"novaro-server/config"
 	"novaro-server/model"
+	"novaro-server/service"
 	"strings"
 	"time"
 
@@ -36,7 +37,7 @@ func login(c *gin.Context) {
 	query := c.Request.URL.Query()
 	if query.Has("icode") {
 		icode := query.Get("icode")
-		if exist, err := model.CheckInvitationCodes(icode); err != nil {
+		if exist, err := service.NewInvitationCodesService().CheckInvitationCodes(icode); err != nil {
 			c.JSON(500, gin.H{"error": err.Error()})
 			return
 		} else if !exist {
@@ -87,13 +88,13 @@ func callback(c *gin.Context) {
 		return
 	}
 
-	err = model.SaveTwitterUsers(user.ToTwitterUsers())
+	err = service.NewTwiitterUserService().SaveTwitterUsers(user.ToTwitterUsers())
 	if err != nil {
 		c.JSON(500, gin.H{"error": err.Error()})
 		return
 	}
 
-	id, err := model.SaveUsers(user.ToUsers())
+	id, err := service.NewUserService().SaveUsers(user.ToUsers())
 	if err != nil {
 		c.JSON(500, gin.H{"error": err.Error()})
 		return

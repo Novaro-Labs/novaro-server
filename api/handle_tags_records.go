@@ -3,11 +3,19 @@ package api
 import (
 	"github.com/gin-gonic/gin"
 	"novaro-server/model"
+	"novaro-server/service"
 )
 
 type TagsRecordsApi struct {
-	TagId  string `json:"tagId"`
-	PostId string `json:"postId"`
+	TagId   string                     `json:"tagId"`
+	PostId  string                     `json:"postId"`
+	service *service.TagsRecordService `json:"-"`
+}
+
+func NewTagsRecordApi() *TagsRecordsApi {
+	return &TagsRecordsApi{
+		service: service.NewTagsRecordService(),
+	}
 }
 
 // AddTagsRecords godoc
@@ -20,26 +28,14 @@ type TagsRecordsApi struct {
 // @Success 200 "Successfully added tags records"
 // @Failure 400
 // @Router /v1/api/tags/records/add [post]
-func (TagsRecordsApi) AddTagsRecords(c *gin.Context) {
+func (api *TagsRecordsApi) AddTagsRecords(c *gin.Context) {
 	var tagsRecords model.TagsRecords
 	if err := c.ShouldBindJSON(&tagsRecords); err != nil {
 		c.JSON(400, gin.H{"error": err.Error()})
 		return
 	}
 
-	exists, err := model.PostExists(tagsRecords.PostId)
-	if err != nil || !exists {
-		c.JSON(400, gin.H{"error": "Post does not exist"})
-		return
-	}
-
-	tagExists, err := model.TagExists(tagsRecords.TagId)
-	if err != nil || !tagExists {
-		c.JSON(400, gin.H{"error": "Tag does not exist"})
-		return
-	}
-
-	if err := model.AddTagsRecords(&tagsRecords); err != nil {
+	if err := api.service.Create(&tagsRecords); err != nil {
 		c.JSON(400, gin.H{"error": err.Error()})
 		return
 	}

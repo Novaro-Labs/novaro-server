@@ -3,7 +3,6 @@ package model
 import (
 	"github.com/google/uuid"
 	"gorm.io/gorm"
-	"novaro-server/config"
 	"strings"
 	"time"
 )
@@ -23,9 +22,4 @@ func (u *TagsRecords) BeforeCreate(tx *gorm.DB) error {
 
 func (TagsRecords) TableName() string {
 	return "tags_records"
-}
-
-func AddTagsRecords(t *TagsRecords) error {
-	err := config.DB.Create(&t).Error
-	return err
 }

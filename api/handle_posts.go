@@ -3,16 +3,24 @@ package api
 import (
 	"github.com/gin-gonic/gin"
 	"novaro-server/model"
+	"novaro-server/service"
 )
 
 type PostsApi struct {
-	UserId  string `json:"userId"`
-	Content string `json:"content"`
+	UserId  string               `json:"userId"`
+	Content string               `json:"content"`
+	service *service.PostService `json:"-"`
 }
 
 type RePosts struct {
 	PostsApi   PostsApi
 	OriginalId string `json:"originalId"`
+}
+
+func NewPostsApi() *PostsApi {
+	return &PostsApi{
+		service: service.NewPostService(),
+	}
 }
 
 // GetPostsById godoc
@@ -25,15 +33,18 @@ type RePosts struct {
 // @Success 200 {object} model.Posts
 // @Failure 400
 // @Router /v1/api/posts/getPostsById [get]
-func (PostsApi) GetPostsById(c *gin.Context) {
+func (api *PostsApi) GetPostsById(c *gin.Context) {
 	value := c.Query("id")
 
-	resp, err := model.GetPostsById(value)
+	resp, err := api.service.GetById(value)
 	if err != nil {
 		c.JSON(400, gin.H{"error": err.Error()})
 		return
 	}
-	c.JSON(200, resp)
+	c.JSON(200, gin.H{
+		"code": 200,
+		"data": resp,
+	})
 }
 
 // GetPostsByUserId godoc
@@ -46,14 +57,17 @@ func (PostsApi) GetPostsById(c *gin.Context) {
 // @Success 200 {array} model.Posts
 // @Failure 400
 // @Router /v1/api/posts/getPostsByUserId [get]
-func (PostsApi) GetPostsByUserId(c *gin.Context) {
+func (api *PostsApi) GetPostsByUserId(c *gin.Context) {
 	id := c.Query("userId")
-	resp, err := model.GetPostsByUserId(id)
+	resp, err := api.service.GetByUserId(id)
 	if err != nil {
 		c.JSON(400, gin.H{"error": err.Error()})
 		return
 	}
-	c.JSON(200, resp)
+	c.JSON(200, gin.H{
+		"code": 200,
+		"data": resp,
+	})
 }
 
 // GetPostsList godoc
@@ -66,19 +80,22 @@ func (PostsApi) GetPostsByUserId(c *gin.Context) {
 // @Success 200 {array} model.Posts
 // @Failure 400
 // @Router /v1/api/posts/getPostsList [post]
-func (PostsApi) GetPostsList(c *gin.Context) {
+func (api *PostsApi) GetPostsList(c *gin.Context) {
 	var postsQuery model.PostsQuery
 	if err := c.ShouldBind(&postsQuery); err != nil {
 		c.JSON(400, gin.H{"error": err.Error()})
 		return
 	}
 
-	resp, err := model.GetPostsList(&postsQuery)
+	resp, err := api.service.GetList(&postsQuery)
 	if err != nil {
 		c.JSON(400, gin.H{"error": err.Error()})
 		return
 	}
-	c.JSON(200, resp)
+	c.JSON(200, gin.H{
+		"code": 200,
+		"data": resp,
+	})
 }
 
 // SavePosts godoc
@@ -91,7 +108,7 @@ func (PostsApi) GetPostsList(c *gin.Context) {
 // @Success 200 {object} model.Posts
 // @Failure 400
 // @Router /v1/api/posts/savePosts [post]
-func (PostsApi) SavePosts(c *gin.Context) {
+func (api *PostsApi) SavePosts(c *gin.Context) {
 	var posts model.Posts
 
 	if err := c.ShouldBindJSON(&posts); err != nil {
@@ -99,11 +116,14 @@ func (PostsApi) SavePosts(c *gin.Context) {
 		return
 	}
 
-	if err := model.SavePosts(&posts); err != nil {
+	if err := api.service.Save(&posts); err != nil {
 		c.JSON(400, gin.H{"error": err.Error()})
 		return
 	}
-	c.JSON(200, posts)
+	c.JSON(200, gin.H{
+		"code": 200,
+		"data": posts,
+	})
 }
 
 // SavePosts godoc
@@ -116,7 +136,7 @@ func (PostsApi) SavePosts(c *gin.Context) {
 // @Success 200 {object} model.Posts
 // @Failure 400
 // @Router /v1/api/posts/saveRePosts [post]
-func (PostsApi) SaveReposts(c *gin.Context) {
+func (api *PostsApi) SaveReposts(c *gin.Context) {
 	var posts model.Posts
 
 	if err := c.ShouldBindJSON(&posts); err != nil {
@@ -124,11 +144,14 @@ func (PostsApi) SaveReposts(c *gin.Context) {
 		return
 	}
 
-	if err := model.SavePosts(&posts); err != nil {
+	if err := api.service.Save(&posts); err != nil {
 		c.JSON(400, gin.H{"error": err.Error()})
 		return
 	}
-	c.JSON(200, posts)
+	c.JSON(200, gin.H{
+		"code": 200,
+		"data": posts,
+	})
 }
 
 // DelPostsById godoc
@@ -141,16 +164,20 @@ func (PostsApi) SaveReposts(c *gin.Context) {
 // @Success 200
 // @Failure 400
 // @Router /v1/api/posts/delPostsById [delete]
-func (PostsApi) DelPostsById(c *gin.Context) {
+func (api *PostsApi) DelPostsById(c *gin.Context) {
 	id := c.Query("id")
 	if id == "" {
 		c.JSON(400, gin.H{"error": "id is required"})
 		return
 	}
 
-	if err := model.DelPostsById(id); err != nil {
+	if err := api.service.Delete(id); err != nil {
 		c.JSON(400, gin.H{"error": err.Error()})
 		return
 	}
 	c.JSON(200, gin.H{"msg": "success"})
+}
+
+func (api *PostsApi) SyncData() {
+	api.service.SyncCountToDataBase()
 }

@@ -3,13 +3,21 @@ package api
 import (
 	"github.com/gin-gonic/gin"
 	"novaro-server/model"
+	"novaro-server/service"
 )
 
 type CommentsApi struct {
-	UserId   string `json:"userId"`
-	PostId   string `json:"postId"`
-	ParentId string `json:"parentId"`
-	Content  string `json:"content"`
+	UserId   string                   `json:"userId"`
+	PostId   string                   `json:"postId"`
+	ParentId string                   `json:"parentId"`
+	Content  string                   `json:"content"`
+	service  *service.CommentsService `json:"-"`
+}
+
+func NewCommentApi() *CommentsApi {
+	return &CommentsApi{
+		service: service.NewCommentService(),
+	}
 }
 
 // AddComments godoc
@@ -22,7 +30,7 @@ type CommentsApi struct {
 // @Success 200
 // @Failure 400
 // @Router /v1/api/comments/add [post]
-func (CommentsApi) AddComments(c *gin.Context) {
+func (api *CommentsApi) AddComments(c *gin.Context) {
 	var comments model.Comments
 
 	if err := c.ShouldBindJSON(&comments); err != nil {
@@ -30,7 +38,7 @@ func (CommentsApi) AddComments(c *gin.Context) {
 		return
 	}
 
-	if err := model.AddComments(&comments); err != nil {
+	if err := api.service.Create(&comments); err != nil {
 		c.JSON(400, gin.H{"error": err.Error()})
 		return
 	}
@@ -48,9 +56,9 @@ func (CommentsApi) AddComments(c *gin.Context) {
 // @Success 200 {array} model.Comments
 // @Failure 400
 // @Router /v1/api/comments/getCommentsListByPostId [get]
-func (CommentsApi) GetCommentsListByPostId(c *gin.Context) {
+func (api *CommentsApi) GetCommentsListByPostId(c *gin.Context) {
 	postId := c.Query("postId")
-	comments, err := model.GetCommentsListByPostId(postId)
+	comments, err := api.service.GetListByPostId(postId)
 	if err != nil {
 		c.JSON(400, gin.H{"error": err.Error()})
 		return
@@ -68,9 +76,9 @@ func (CommentsApi) GetCommentsListByPostId(c *gin.Context) {
 // @Success 200 {array} model.Comments
 // @Failure 400
 // @Router /v1/api/comments/getCommentsListByParentId [get]
-func (CommentsApi) GetCommentsListByParentId(c *gin.Context) {
+func (api *CommentsApi) GetCommentsListByParentId(c *gin.Context) {
 	parentId := c.Query("parentId")
-	comments, err := model.GetCommentsListByParentId(parentId)
+	comments, err := api.service.GetListByParentId(parentId)
 	if err != nil {
 		c.JSON(400, gin.H{"error": err.Error()})
 		return
@@ -88,14 +96,17 @@ func (CommentsApi) GetCommentsListByParentId(c *gin.Context) {
 // @Success 200 {array} model.Comments
 // @Failure 400
 // @Router /v1/api/comments/getCommentsListByUserId [get]
-func (CommentsApi) GetCommentsListByUserId(c *gin.Context) {
+func (api *CommentsApi) GetCommentsListByUserId(c *gin.Context) {
 	userId := c.Query("userId")
-	comments, err := model.GetCommentsListByUserId(userId)
+	comments, err := api.service.GetListByUserId(userId)
 	if err != nil {
 		c.JSON(400, gin.H{"error": err.Error()})
 		return
 	}
-	c.JSON(200, comments)
+	c.JSON(200, gin.H{
+		"code": 200,
+		"data": comments,
+	})
 }
 
 // DeleteById godoc
@@ -108,7 +119,7 @@ func (CommentsApi) GetCommentsListByUserId(c *gin.Context) {
 // @Success 200
 // @Failure 400
 // @Router /v1/api/comments/delete [delete]
-func (CommentsApi) DeleteById(c *gin.Context) {
+func (api *CommentsApi) DeleteById(c *gin.Context) {
 	id := c.Query("id")
 
 	if id == "" {
@@ -116,7 +127,7 @@ func (CommentsApi) DeleteById(c *gin.Context) {
 		return
 	}
 
-	err := model.DeleteById(id)
+	err := api.service.Delete(id)
 	if err != nil {
 		c.JSON(400, gin.H{"error": err.Error()})
 		return

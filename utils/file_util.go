@@ -7,7 +7,7 @@ import (
 	"mime/multipart"
 	"net/http"
 	"novaro-server/config"
-	"novaro-server/model"
+	"novaro-server/service"
 	"os"
 	"path/filepath"
 	"time"
@@ -67,7 +67,7 @@ func handleFile(file multipart.File, fileHeader *multipart.FileHeader, sourceId 
 	filepath := filepath.Join(uploadDir, filename)
 
 	// 存入db
-	if err := model.UploadFile(filepath, sourceId); err != nil {
+	if err := service.NewImgsService().UploadFile(filepath, sourceId); err != nil {
 		return err
 	}
 
