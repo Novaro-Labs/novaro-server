@@ -3,6 +3,7 @@ package config
 import (
 	"fmt"
 	"novaro-server/model"
+	"sync"
 	"time"
 
 	"github.com/glebarez/sqlite"
@@ -23,6 +24,7 @@ var (
 	ClientSecret            string
 	Proxy                   string
 	UploadPath              string
+	once1                   sync.Once
 )
 
 func Init() error {
@@ -90,6 +92,8 @@ func initDB() error {
 	DB.AutoMigrate(&model.Invitations{})
 	DB.AutoMigrate(&model.Imgs{})
 	DB.AutoMigrate(&model.Events{})
+	DB.AutoMigrate(&model.NftInfo{})
+	DB.AutoMigrate(&model.PointsHistory{})
 
 	return nil
 }
@@ -114,6 +118,15 @@ func initRabbitMQ() error {
 		return fmt.Errorf("RabbitMQ 连接失败: %w", err)
 	}
 	return nil
+}
+
+func GetRedis() *redis.Client {
+	if RDB == nil {
+		once1.Do(func() {
+			initRedis()
+		})
+	}
+	return RDB
 }
 
 // Close 关闭所有连接

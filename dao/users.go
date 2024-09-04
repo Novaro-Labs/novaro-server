@@ -34,3 +34,9 @@ func (d *UsersDao) UserExists(userId string) (bool, error) {
 	err := d.db.Model(&model.Users{}).Where("id = ?", userId).Count(&count).Error
 	return count > 0, err
 }
+
+func (d *UsersDao) GetById(id string) (model.Users, error) {
+	var user model.Users
+	tx := d.db.Where("id = ?", id).Find(&user)
+	return user, tx.Error
+}

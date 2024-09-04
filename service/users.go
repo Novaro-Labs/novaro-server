@@ -24,3 +24,7 @@ func (s *UserService) SaveUsers(users *model.Users) (string, error) {
 func (s *UserService) UserExists(userId string) (bool, error) {
 	return s.dao.UserExists(userId)
 }
+
+func (s *UserService) GetById(id string) (model.Users, error) {
+	return s.dao.GetById(id)
+}

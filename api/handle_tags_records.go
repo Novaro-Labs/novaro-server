@@ -9,6 +9,7 @@ import (
 type TagsRecordsApi struct {
 	TagId   string                     `json:"tagId"`
 	PostId  string                     `json:"postId"`
+	UserId  string                     `json:"userId"`
 	service *service.TagsRecordService `json:"-"`
 }
 

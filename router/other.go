@@ -13,7 +13,6 @@ func AddOtherRoutes(r *gin.RouterGroup) {
 	collections := r.Group("/api/collections")
 	{
 		collectionsApi := api.NewCollectionsApi()
-
 		// 定时器
 		cron.AddJob("@every 5m", func() {
 			collectionsApi.Sync()

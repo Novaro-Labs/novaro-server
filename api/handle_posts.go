@@ -122,7 +122,7 @@ func (api *PostsApi) SavePosts(c *gin.Context) {
 	}
 	c.JSON(200, gin.H{
 		"code": 200,
-		"data": posts,
+		"msg":  "success",
 	})
 }
 
@@ -150,7 +150,7 @@ func (api *PostsApi) SaveReposts(c *gin.Context) {
 	}
 	c.JSON(200, gin.H{
 		"code": 200,
-		"data": posts,
+		"msg":  "success",
 	})
 }
 

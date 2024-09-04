@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/go-redis/redis/v8"
+	"gorm.io/gorm"
 	"log"
 	"novaro-server/config"
 	"novaro-server/dao"
@@ -95,7 +96,40 @@ func (s *PostService) GetByUserId(userId string) ([]model.Posts, error) {
 }
 
 func (s *PostService) Save(posts *model.Posts) error {
-	return s.dao.Save(posts)
+	user, err := NewUserService().GetById(posts.UserId)
+	if err != nil {
+		return fmt.Errorf("failed to get user: %w", err)
+	}
+
+	err = config.DB.Transaction(func(tx *gorm.DB) error {
+		// 保存帖子
+		if err := s.dao.Save(tx, posts); err != nil {
+			return fmt.Errorf("failed to save post: %w", err)
+		}
+
+		// 计算积分
+		count, err := s.dao.GetCountByUserId(posts.UserId)
+		if err != nil {
+			return fmt.Errorf("failed to get post count: %w", err)
+		}
+		point := s.calculatePoints(count)
+
+		// 创建积分历史记录
+		if user.WalletPublicKey != nil {
+			history := model.PointsHistory{
+				Wallet: user.WalletPublicKey,
+				Points: float64(point),
+				Status: 0,
+			}
+
+			if err := NewPointsHistoryService().Create(tx, &history); err != nil {
+				return fmt.Errorf("failed to create points history: %w", err)
+			}
+		}
+
+		return nil
+	})
+	return err
 }
 
 func (s *PostService) Update(posts *model.Posts) error {
@@ -274,5 +308,16 @@ func (s *PostService) SyncCountToDataBase() {
 
 	if len(errors) > 0 {
 		fmt.Errorf("some updates failed: %s", strings.Join(errors, "; "))
+	}
+}
+
+func (d *PostService) calculatePoints(value int64) int {
+	switch value {
+	case 0:
+		return 20
+	case 1:
+		return 10
+	default:
+		return 0
 	}
 }

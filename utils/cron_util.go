@@ -1,6 +1,9 @@
 package utils
 
-import "github.com/robfig/cron/v3"
+import (
+	"github.com/robfig/cron/v3"
+	"novaro-server/config"
+)
 
 type CronManager struct {
 	cron *cron.Cron
@@ -18,7 +21,12 @@ func (cm *CronManager) AddJob(spec string, job func()) error {
 }
 
 func (cm *CronManager) Start() {
-	cm.cron.Start()
+
+	rdb := config.RDB
+	_, err := rdb.Ping(rdb.Context()).Result()
+	if err == nil {
+		cm.cron.Start()
+	}
 }
 
 func (cm *CronManager) Stop() {

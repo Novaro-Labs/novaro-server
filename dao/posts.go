@@ -3,6 +3,7 @@ package dao
 import (
 	"gorm.io/gorm"
 	"novaro-server/model"
+	"time"
 )
 
 type PostsDao struct {
@@ -37,11 +38,24 @@ func (d *PostsDao) PostExists(id string) (bool, error) {
 }
 
 func (d *PostsDao) GetPostsByUserId(userId string) (resp []model.Posts, err error) {
-	err = d.db.Table("posts").Where("user_id = ?", userId).Find(&resp).Error
+	err = d.db.Model(&model.Posts{}).Where("user_id = ?", userId).Find(&resp).Error
 	return resp, nil
 }
+func (d *PostsDao) GetCountByUserId(userId string) (count int64, err error) {
 
-func (d *PostsDao) Save(posts *model.Posts) error {
+	// 获取当前日期的开始和结束时间
+	now := time.Now()
+	startOfDay := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
+	endOfDay := startOfDay.Add(24 * time.Hour)
+
+	tx := d.db.Model(&model.Posts{}).
+		Where("user_id = ? AND created_at >= ? AND created_at < ?", userId, startOfDay, endOfDay).
+		Count(&count)
+
+	return count, tx.Error
+}
+
+func (d *PostsDao) Save(tx *gorm.DB, posts *model.Posts) error {
 	var data = model.Posts{
 		Id:         posts.Id,
 		UserId:     posts.UserId,
@@ -50,8 +64,10 @@ func (d *PostsDao) Save(posts *model.Posts) error {
 		SourceId:   posts.SourceId,
 	}
 
-	tx := d.db.Create(&data)
-	return tx.Error
+	if tx == nil {
+		tx = d.db
+	}
+	return tx.Create(&data).Error
 }
 
 func (d *PostsDao) Update(posts *model.Posts) error {
