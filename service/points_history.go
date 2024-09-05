@@ -2,7 +2,6 @@ package service
 
 import (
 	"gorm.io/gorm"
-	"novaro-server/config"
 	"novaro-server/dao"
 	"novaro-server/model"
 )
@@ -13,7 +12,7 @@ type PointsHistoryService struct {
 
 func NewPointsHistoryService() *PointsHistoryService {
 	return &PointsHistoryService{
-		dao: dao.NewPointsHistoryDao(config.DB),
+		dao: dao.NewPointsHistoryDao(model.GetDB()),
 	}
 }
 

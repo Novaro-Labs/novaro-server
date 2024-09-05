@@ -1,7 +1,6 @@
 package service
 
 import (
-	"novaro-server/config"
 	"novaro-server/dao"
 	"novaro-server/model"
 )
@@ -12,7 +11,7 @@ type ImgsService struct {
 
 func NewImgsService() *ImgsService {
 	return &ImgsService{
-		dao: dao.NewImgsDao(config.DB),
+		dao: dao.NewImgsDao(model.GetDB()),
 	}
 }
 

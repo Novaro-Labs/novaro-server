@@ -2,7 +2,6 @@ package dao
 
 import (
 	"gorm.io/gorm"
-	"novaro-server/config"
 	"novaro-server/model"
 )
 
@@ -31,6 +30,6 @@ func (d *TagsDao) GetTagsList() (resp []model.Tags, err error) {
 
 func (d *TagsDao) TagExists(id string) (bool, error) {
 	var count int64
-	tx := config.DB.Model(&model.Tags{}).Where("id = ?", id).Count(&count)
+	tx := d.db.Model(&model.Tags{}).Where("id = ?", id).Count(&count)
 	return count > 0, tx.Error
 }

@@ -1,4 +1,4 @@
-package router
+package routers
 
 import (
 	"crypto/rand"
@@ -52,7 +52,7 @@ func login(c *gin.Context) {
 
 	querys := url.Values{
 		"response_type":         {"code"},
-		"client_id":             {config.ClientId},
+		"client_id":             {config.Get().Client.ClientId},
 		"redirect_uri":          {redirectUri},
 		"scope":                 {"tweet.read+users.read+follows.read+offline.access"},
 		"state":                 {codeVerifier},
@@ -125,6 +125,7 @@ func redirectUrl(c *gin.Context, query *url.Values) string {
 }
 
 func getToken(code, redirectUri, codeVerifier string) (string, error) {
+	cli := config.Get().Client
 	form := url.Values{
 		"code":          {code},
 		"grant_type":    {"authorization_code"},
@@ -139,7 +140,7 @@ func getToken(code, redirectUri, codeVerifier string) (string, error) {
 		return "", err
 	}
 
-	request.SetBasicAuth(config.ClientId, config.ClientSecret)
+	request.SetBasicAuth(cli.ClientId, cli.ClientSecret)
 	request.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 
 	client := newHttpClient()
@@ -202,6 +203,9 @@ func generateCodeVerifier() string {
 }
 
 func newHttpClient() *http.Client {
+
+	proxy := config.Get().Client.Proxy
+
 	transport := &http.Transport{
 		Dial: (&net.Dialer{
 			Timeout:   60 * time.Second,
@@ -210,8 +214,8 @@ func newHttpClient() *http.Client {
 		// We use ABSURDLY large keys, and should probably not.
 		TLSHandshakeTimeout: 60 * time.Second,
 	}
-	if config.Proxy != "" {
-		proxyUrl, err := url.Parse(config.Proxy)
+	if proxy != "" {
+		proxyUrl, err := url.Parse(proxy)
 		if err == nil {
 			transport.Proxy = http.ProxyURL(proxyUrl)
 		}

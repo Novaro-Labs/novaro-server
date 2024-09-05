@@ -5,8 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/rabbitmq/amqp091-go"
+	"github.com/redis/go-redis/v9"
 	"log"
-	"novaro-server/config"
 	"novaro-server/dao"
 	"novaro-server/model"
 	"time"
@@ -14,39 +14,49 @@ import (
 
 type CollectionsService struct {
 	dao *dao.CollectionsDao
+	rdb *redis.Client
+	mq  *amqp091.Connection
+
+	userDao *dao.UsersDao
+	postDao *dao.PostsDao
 }
 
 func NewCollectionsService() *CollectionsService {
+	db := model.GetDB()
 	return &CollectionsService{
-		dao: dao.NewCollectionsDao(config.DB),
+		dao:     dao.NewCollectionsDao(db),
+		rdb:     model.GetRedisCli(),
+		mq:      model.GetRabbitMqCli(),
+		userDao: dao.NewUsersDao(db),
+		postDao: dao.NewPostsDao(db),
 	}
 }
 
 func (s *CollectionsService) AddOrRemove(c *model.Collections) error {
-	exist, err := NewUserService().UserExists(c.UserId)
+	exist, err := s.userDao.UserExists(c.UserId)
 	if err != nil || exist == false {
 		return fmt.Errorf("userId is not exist")
 	}
 
-	postExist, err := NewPostService().PostExists(c.PostId)
+	postExist, err := s.postDao.PostExists(c.PostId)
 	if err != nil || postExist == false {
 		return fmt.Errorf("postId is not exist")
 	}
 
 	var errs error
 	if collectionsExist := s.CollectionsExist(c.UserId, c.PostId); collectionsExist == true {
-		errs = unCollectionsTweet(c)
+		errs = s.unCollectionsTweet(c)
 	} else {
-		errs = collectionsTweet(c)
+		errs = s.collectionsTweet(c)
 	}
 
 	return errs
 }
 
 // 获取用户收藏的推文
-func collectionsTweet(c *model.Collections) error {
+func (s *CollectionsService) collectionsTweet(c *model.Collections) error {
 	ctx := context.Background()
-	pipeline := config.RDB.Pipeline()
+	pipeline := s.rdb.Pipeline()
 
 	// 将用户添加到推文的收藏集合中
 	key := fmt.Sprintf("tweet:%s:collections", c.PostId)
@@ -63,7 +73,7 @@ func collectionsTweet(c *model.Collections) error {
 	}
 
 	go func() {
-		err := sendToRabbitMQ(q)
+		err := s.sendToRabbitMQ(q)
 		if err != nil {
 			// 在这里处理错误，可以记录日志或者重试
 			fmt.Printf("Error sending to RabbitMQ: %v\n", err)
@@ -73,10 +83,10 @@ func collectionsTweet(c *model.Collections) error {
 }
 
 // 从收藏中移除推文
-func unCollectionsTweet(c *model.Collections) error {
+func (s *CollectionsService) unCollectionsTweet(c *model.Collections) error {
 	// 删除redis缓存
 	ctx := context.Background()
-	pipeline := config.RDB.Pipeline()
+	pipeline := s.rdb.Pipeline()
 
 	// 将用户移除推文的收藏集合中
 	key := fmt.Sprintf("tweet:%s:collections", c.PostId)
@@ -91,7 +101,7 @@ func unCollectionsTweet(c *model.Collections) error {
 		Operation:   "remove",
 	}
 	go func() {
-		err := sendToRabbitMQ(q)
+		err := s.sendToRabbitMQ(q)
 		if err != nil {
 			// 在这里处理错误，可以记录日志或者重试
 			fmt.Printf("Error sending to RabbitMQ: %v\n", err)
@@ -102,7 +112,7 @@ func unCollectionsTweet(c *model.Collections) error {
 
 func (s *CollectionsService) CollectionsExist(userId string, postId string) bool {
 	key := fmt.Sprintf("tweet:%s:collections", postId)
-	result, err := config.RDB.SIsMember(context.Background(), key, userId).Result()
+	result, err := s.rdb.SIsMember(context.Background(), key, userId).Result()
 	if err != nil {
 		e, _ := s.dao.CollectionsExist(userId, postId)
 		return e
@@ -111,8 +121,8 @@ func (s *CollectionsService) CollectionsExist(userId string, postId string) bool
 }
 
 // 发送消息到RabbitMQ
-func sendToRabbitMQ(q model.Queue) error {
-	ch, err := config.RBQ.Channel()
+func (s *CollectionsService) sendToRabbitMQ(q model.Queue) error {
+	ch, err := s.mq.Channel()
 	if err != nil {
 		return err
 	}
@@ -138,8 +148,8 @@ func sendToRabbitMQ(q model.Queue) error {
 }
 
 // 从RabbitMQ中消费消息
-func consumeFromRabbitMQ() ([]model.Queue, error) {
-	ch, err := config.RBQ.Channel()
+func (s *CollectionsService) consumeFromRabbitMQ() ([]model.Queue, error) {
+	ch, err := s.mq.Channel()
 	if err != nil {
 		return nil, fmt.Errorf("无法打开通道: %v", err)
 	}
@@ -209,7 +219,7 @@ func consumeFromRabbitMQ() ([]model.Queue, error) {
 
 // 将记录同步到数据库
 func (s *CollectionsService) SyncToDatabase() {
-	messages, err := consumeFromRabbitMQ()
+	messages, err := s.consumeFromRabbitMQ()
 	if messages == nil || err != nil {
 		log.Println("Failed to consumer from rabbitmq:", err)
 		return

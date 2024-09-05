@@ -11,7 +11,16 @@ type TagsRecords struct {
 	Id        string    `json:"id"`
 	TagId     string    `json:"tagId"`
 	PostId    string    `json:"postId"`
+	UserId    string    `json:"userId"`
 	CreatedAt time.Time `json:"createdAt"`
+}
+
+type TagRecordQueue struct {
+	TagId     string  `json:"tagId"`
+	PostId    string  `json:"postId"`
+	UserId    string  `json:"userId"`
+	Points    float64 `json:"points"`
+	Operation string  `json:"operation"`
 }
 
 func (u *TagsRecords) BeforeCreate(tx *gorm.DB) error {

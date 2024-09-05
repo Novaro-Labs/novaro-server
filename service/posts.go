@@ -3,10 +3,9 @@ package service
 import (
 	"context"
 	"fmt"
-	"github.com/go-redis/redis/v8"
+	"github.com/redis/go-redis/v9"
 	"gorm.io/gorm"
 	"log"
-	"novaro-server/config"
 	"novaro-server/dao"
 	"novaro-server/model"
 	"strings"
@@ -14,22 +13,32 @@ import (
 )
 
 type PostService struct {
-	dao *dao.PostsDao
+	dao              *dao.PostsDao
+	rdb              *redis.Client
+	collectionDao    *dao.CollectionsDao
+	tagsDao          *dao.TagsDao
+	imgsDao          *dao.ImgsDao
+	userDao          *dao.UsersDao
+	pointsHistoryDao *dao.PointsHistoryDao
+	commentsDao      *dao.CommentsDao
 }
 
 func NewPostService() *PostService {
+	db := model.GetDB()
 	return &PostService{
-		dao: dao.NewPostsDao(config.DB),
+		dao:              dao.NewPostsDao(db),
+		rdb:              model.GetRedisCli(),
+		collectionDao:    dao.NewCollectionsDao(db),
+		tagsDao:          dao.NewTagsDao(db),
+		imgsDao:          dao.NewImgsDao(db),
+		pointsHistoryDao: dao.NewPointsHistoryDao(db),
+		commentsDao:      dao.NewCommentsDao(db),
+		userDao:          dao.NewUsersDao(db),
 	}
 }
 
 func (s *PostService) GetList(p *model.PostsQuery) (resp []model.Posts, err error) {
-	query := config.DB.Table("posts")
-	if p.Id != "" {
-		query = query.Where("id = ?", p.Id)
-	}
-
-	err = query.Find(&resp).Error
+	resp, err = s.dao.GetPostsList(p)
 
 	var wg sync.WaitGroup
 	// 使用缓冲通道作为信号量来限制并发 goroutine 的数量
@@ -44,10 +53,10 @@ func (s *PostService) GetList(p *model.PostsQuery) (resp []model.Posts, err erro
 			defer func() { <-semaphore }() // 释放信号量
 
 			// 检查收藏状态
-			resp[i].IsCollected = NewCollectionsService().CollectionsExist(p.UserId, resp[i].Id)
+			resp[i].IsCollected, err = s.collectionDao.CollectionsExist(p.UserId, resp[i].Id)
 
 			// 获取标签
-			tags, err := NewTagsService().GetListByPostId(resp[i].Id)
+			tags, err := s.tagsDao.GetTagListByPostId(resp[i].Id)
 			if err != nil {
 				resp[i].Tags = nil
 			} else {
@@ -55,7 +64,7 @@ func (s *PostService) GetList(p *model.PostsQuery) (resp []model.Posts, err erro
 			}
 
 			// 获取图片
-			source, err2 := NewImgsService().GetBySourceId(resp[i].SourceId)
+			source, err2 := s.imgsDao.GetImgsBySourceId(resp[i].SourceId)
 			if err2 != nil {
 				resp[i].Imgs = nil
 			} else {
@@ -72,7 +81,7 @@ func (s *PostService) GetList(p *model.PostsQuery) (resp []model.Posts, err erro
 
 func (s *PostService) GetById(id string) (model.Posts, error) {
 	resp, err := s.dao.GetPostsById(id)
-	tags, err := NewTagsService().GetListByPostId(resp.Id)
+	tags, err := s.tagsDao.GetTagListByPostId(resp.Id)
 	resp.Tags = tags
 	return resp, err
 }
@@ -86,7 +95,7 @@ func (s *PostService) GetByUserId(userId string) ([]model.Posts, error) {
 
 	// 处理标签
 	for i := range resp {
-		tags, err := NewTagsService().GetListByPostId(resp[i].Id)
+		tags, err := s.tagsDao.GetTagListByPostId(resp[i].Id)
 		if err != nil {
 			resp[i].Tags = nil
 		}
@@ -96,12 +105,12 @@ func (s *PostService) GetByUserId(userId string) ([]model.Posts, error) {
 }
 
 func (s *PostService) Save(posts *model.Posts) error {
-	user, err := NewUserService().GetById(posts.UserId)
+	user, err := s.userDao.GetById(posts.UserId)
 	if err != nil {
 		return fmt.Errorf("failed to get user: %w", err)
 	}
 
-	err = config.DB.Transaction(func(tx *gorm.DB) error {
+	err = model.GetDB().Transaction(func(tx *gorm.DB) error {
 		// 保存帖子
 		if err := s.dao.Save(tx, posts); err != nil {
 			return fmt.Errorf("failed to save post: %w", err)
@@ -122,7 +131,7 @@ func (s *PostService) Save(posts *model.Posts) error {
 				Status: 0,
 			}
 
-			if err := NewPointsHistoryService().Create(tx, &history); err != nil {
+			if err := s.pointsHistoryDao.Create(tx, &history); err != nil {
 				return fmt.Errorf("failed to create points history: %w", err)
 			}
 		}
@@ -145,7 +154,7 @@ func (s *PostService) Delete(id string) error {
 }
 
 func (s *PostService) SyncData() error {
-	rdb := config.RDB
+	rdb := s.rdb
 	ctx := context.Background()
 	result, err := rdb.ZRange(ctx, "tweet:collections:count", 0, -1).Result()
 
@@ -205,7 +214,7 @@ func (s *PostService) processTweet(ctx context.Context, rdb *redis.Client, tweet
 	score, err := rdb.ZScore(ctx, "tweet:collections:count", tweetID).Result()
 	repost, err := rdb.ZScore(ctx, "tweet:reposts:count", tweetID).Result()
 
-	count := NewCommentService().GetCount(tweetID)
+	count := s.commentsDao.GetCount(tweetID)
 	return model.Posts{
 		Id:                tweetID,
 		CollectionsAmount: int(score) + resp.CollectionsAmount,
@@ -215,7 +224,7 @@ func (s *PostService) processTweet(ctx context.Context, rdb *redis.Client, tweet
 }
 
 func (s *PostService) SyncCountToDataBase() {
-	rdb := config.RDB
+	rdb := s.rdb
 	ctx := context.Background()
 
 	// 同步收藏数量

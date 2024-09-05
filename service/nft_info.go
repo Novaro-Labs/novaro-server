@@ -1,7 +1,6 @@
 package service
 
 import (
-	"novaro-server/config"
 	"novaro-server/dao"
 	"novaro-server/model"
 )
@@ -12,7 +11,7 @@ type NftInfoService struct {
 
 func NewNftInfoService() *NftInfoService {
 	return &NftInfoService{
-		dao: dao.NewNftInfoDao(config.DB),
+		dao: dao.NewNftInfoDao(model.GetDB()),
 	}
 }
 

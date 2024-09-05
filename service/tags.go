@@ -1,7 +1,6 @@
 package service
 
 import (
-	"novaro-server/config"
 	"novaro-server/dao"
 	"novaro-server/model"
 )
@@ -12,7 +11,7 @@ type TagsService struct {
 
 func NewTagsService() *TagsService {
 	return &TagsService{
-		dao: dao.NewTagsDao(config.DB),
+		dao: dao.NewTagsDao(model.GetDB()),
 	}
 }
 

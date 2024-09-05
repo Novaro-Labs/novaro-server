@@ -3,18 +3,20 @@ package service
 import (
 	"context"
 	"fmt"
-	"novaro-server/config"
+	"github.com/redis/go-redis/v9"
 	"novaro-server/dao"
 	"novaro-server/model"
 )
 
 type CommentsService struct {
 	dao *dao.CommentsDao
+	rdb *redis.Client
 }
 
 func NewCommentService() *CommentsService {
 	return &CommentsService{
-		dao: dao.NewCommentsDao(config.DB),
+		dao: dao.NewCommentsDao(model.GetDB()),
+		rdb: model.GetRedisCli(),
 	}
 }
 
@@ -22,7 +24,7 @@ func (s *CommentsService) Create(c *model.Comments) error {
 	err := s.dao.Create(c)
 
 	// 用redis来记录评论数量
-	config.RDB.ZIncrBy(context.Background(), "tweet:comments:count", 1, c.PostId)
+	s.rdb.ZIncrBy(context.Background(), "tweet:comments:count", 1, c.PostId)
 	return err
 }
 
@@ -57,6 +59,6 @@ func (s *CommentsService) Delete(id string) error {
 		return err
 	}
 	resp, _ := s.dao.GetById(id)
-	config.RDB.ZIncrBy(context.Background(), "tweet:comments:count", -1, resp.PostId)
+	s.rdb.ZIncrBy(context.Background(), "tweet:comments:count", -1, resp.PostId)
 	return err
 }

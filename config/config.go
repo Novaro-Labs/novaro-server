@@ -1,144 +1,191 @@
 package config
 
 import (
-	"fmt"
-	"novaro-server/model"
-	"sync"
+	"github.com/zhufuyi/sponge/pkg/conf"
 	"time"
-
-	"github.com/glebarez/sqlite"
-	"github.com/go-redis/redis/v8"
-	"github.com/rabbitmq/amqp091-go"
-	"github.com/spf13/viper"
-	"gorm.io/driver/postgres"
-	"gorm.io/gorm"
 )
 
-var (
-	DB                      *gorm.DB
-	RDB                     *redis.Client
-	RBQ                     *amqp091.Connection
-	InvitatioCodeExpiration time.Duration
-	InvitatioCodeLength     int
-	ClientId                string
-	ClientSecret            string
-	Proxy                   string
-	UploadPath              string
-	once1                   sync.Once
-)
+var config *Config
 
-func Init() error {
-	viper.SetConfigName("config")
-	viper.SetConfigType("yaml")
-	viper.SetDefault("invitation_code_expire_day", "7")
-	viper.SetDefault("invitation_code_length", "8")
-	viper.AddConfigPath(".")
-	var err error
-
-	err = viper.ReadInConfig() // 查找并读取配置文件
-	if err != nil {            // 处理读取配置文件的错误
-		panic(fmt.Errorf("Fatal error config file: %s \n", err))
-	}
-	expire := viper.GetInt("invitation_code_expire_day")
-	InvitatioCodeExpiration = time.Duration(float64(expire) * 24 * float64(time.Hour))
-	InvitatioCodeLength = viper.GetInt("invitation_code_length")
-	ClientId = viper.GetString("client_id")
-	ClientSecret = viper.GetString("client_secret")
-	Proxy = viper.GetString("proxy")
-	UploadPath = viper.GetString("uploadPath")
-	// 初始化数据库连接
-	err = initDB()
-
-	// 初始化 Redis 连接
-	err = initRedis()
-
-	// 初始化 RabbitMQ 连接
-	err = initRabbitMQ()
-
-	return err
+func Init(configFile string, fs ...func()) error {
+	config = &Config{}
+	return conf.Parse(configFile, config, fs...)
 }
 
-func initDB() error {
-	env := viper.GetString("env")
-	var err error
-
-	if env != "dev" {
-		dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%d sslmode=disable TimeZone=Asia/Shanghai",
-			viper.GetString("database.host"),
-			viper.GetString("database.user"),
-			viper.GetString("database.password"),
-			viper.GetString("database.name"),
-			viper.GetInt("database.port"),
-		)
-		DB, err = gorm.Open(postgres.Open(dsn), &gorm.Config{})
-	} else {
-		DB, err = gorm.Open(sqlite.Open("test.db"), &gorm.Config{})
-	}
-
-	if err != nil {
-		return fmt.Errorf("数据库连接失败: %w", err)
-	}
-
-	// 迁移数据库
-	DB.AutoMigrate(&model.Collections{})
-	DB.AutoMigrate(&model.Comments{})
-	DB.AutoMigrate(&model.Posts{})
-	DB.AutoMigrate(&model.RePosts{})
-	DB.AutoMigrate(&model.Tags{})
-	DB.AutoMigrate(&model.TagsRecords{})
-	DB.AutoMigrate(&model.Users{})
-	DB.AutoMigrate(&model.TwitterUsers{})
-	DB.AutoMigrate(&model.InvitationCodes{})
-	DB.AutoMigrate(&model.Invitations{})
-	DB.AutoMigrate(&model.Imgs{})
-	DB.AutoMigrate(&model.Events{})
-	DB.AutoMigrate(&model.NftInfo{})
-	DB.AutoMigrate(&model.PointsHistory{})
-
-	return nil
+func Show(hiddenFields ...string) string {
+	return conf.Show(config, hiddenFields...)
 }
 
-func initRedis() error {
-	RDB = redis.NewClient(&redis.Options{
-		Addr: "localhost:6379",
-	})
-
-	// 可以添加一个 Ping 操作来验证连接
-	_, err := RDB.Ping(RDB.Context()).Result()
-	if err != nil {
-		return fmt.Errorf("Redis 连接失败: %w", err)
+func Get() *Config {
+	if config == nil {
+		panic("config is nil, please call config.Init() first")
 	}
-	return nil
+	return config
 }
 
-func initRabbitMQ() error {
-	var err error
-	RBQ, err = amqp091.Dial("amqp://root:rabbitmqtest@localhost:5672/")
-	if err != nil {
-		return fmt.Errorf("RabbitMQ 连接失败: %w", err)
-	}
-	return nil
+func Set(conf *Config) {
+	config = conf
 }
 
-func GetRedis() *redis.Client {
-	if RDB == nil {
-		once1.Do(func() {
-			initRedis()
-		})
-	}
-	return RDB
+type Config struct {
+	App        App          `yaml:"app" json:"app"`
+	Consul     Consul       `yaml:"consul" json:"consul"`
+	Database   Database     `yaml:"database" json:"database"`
+	Etcd       Etcd         `yaml:"etcd" json:"etcd"`
+	Grpc       Grpc         `yaml:"grpc" json:"grpc"`
+	GrpcClient []GrpcClient `yaml:"grpcClient" json:"grpcClient"`
+	HTTP       HTTP         `yaml:"http" json:"http"`
+	Jaeger     Jaeger       `yaml:"jaeger" json:"jaeger"`
+	Logger     Logger       `yaml:"logger" json:"logger"`
+	NacosRd    NacosRd      `yaml:"nacosRd" json:"nacosRd"`
+	Redis      Redis        `yaml:"redis" json:"redis"`
+	Client     Client       `yaml:"client" json:"client"`
+	RabbitMQ   RabbitMQ     `json:"rabbitmq" yaml:"rabbitmq"`
 }
 
-// Close 关闭所有连接
-func Close() {
-	if DB != nil {
-		db, _ := DB.DB()
-		db.Close()
-	}
-	if RDB != nil {
-		RDB.Close()
-	}
-	if RBQ != nil {
-		RBQ.Close()
-	}
+type Consul struct {
+	Addr string `yaml:"addr" json:"addr"`
+}
+
+type Etcd struct {
+	Addrs []string `yaml:"addrs" json:"addrs"`
+}
+
+type Jaeger struct {
+	AgentHost string `yaml:"agentHost" json:"agentHost"`
+	AgentPort int    `yaml:"agentPort" json:"agentPort"`
+}
+
+type ClientToken struct {
+	AppID  string `yaml:"appID" json:"appID"`
+	AppKey string `yaml:"appKey" json:"appKey"`
+	Enable bool   `yaml:"enable" json:"enable"`
+}
+
+type ClientSecure struct {
+	CaFile     string `yaml:"caFile" json:"caFile"`
+	CertFile   string `yaml:"certFile" json:"certFile"`
+	KeyFile    string `yaml:"keyFile" json:"keyFile"`
+	ServerName string `yaml:"serverName" json:"serverName"`
+	Type       string `yaml:"type" json:"type"`
+}
+
+type ServerSecure struct {
+	CaFile   string `yaml:"caFile" json:"caFile"`
+	CertFile string `yaml:"certFile" json:"certFile"`
+	KeyFile  string `yaml:"keyFile" json:"keyFile"`
+	Type     string `yaml:"type" json:"type"`
+}
+
+type App struct {
+	CacheType             string  `yaml:"cacheType" json:"cacheType"`
+	EnableCircuitBreaker  bool    `yaml:"enableCircuitBreaker" json:"enableCircuitBreaker"`
+	EnableHTTPProfile     bool    `yaml:"enableHTTPProfile" json:"enableHTTPProfile"`
+	EnableLimit           bool    `yaml:"enableLimit" json:"enableLimit"`
+	EnableMetrics         bool    `yaml:"enableMetrics" json:"enableMetrics"`
+	EnableStat            bool    `yaml:"enableStat" json:"enableStat"`
+	EnableTrace           bool    `yaml:"enableTrace" json:"enableTrace"`
+	Env                   string  `yaml:"env" json:"env"`
+	Host                  string  `yaml:"host" json:"host"`
+	Name                  string  `yaml:"name" json:"name"`
+	RegistryDiscoveryType string  `yaml:"registryDiscoveryType" json:"registryDiscoveryType"`
+	TracingSamplingRate   float64 `yaml:"tracingSamplingRate" json:"tracingSamplingRate"`
+	Version               string  `yaml:"version" json:"version"`
+}
+
+type GrpcClient struct {
+	ClientSecure          ClientSecure `yaml:"clientSecure" json:"clientSecure"`
+	ClientToken           ClientToken  `yaml:"clientToken" json:"clientToken"`
+	EnableLoadBalance     bool         `yaml:"enableLoadBalance" json:"enableLoadBalance"`
+	Host                  string       `yaml:"host" json:"host"`
+	Name                  string       `yaml:"name" json:"name"`
+	Port                  int          `yaml:"port" json:"port"`
+	RegistryDiscoveryType string       `yaml:"registryDiscoveryType" json:"registryDiscoveryType"`
+	Timeout               int          `yaml:"timeout" json:"timeout"`
+}
+
+type Sqlite struct {
+	ConnMaxLifetime int    `yaml:"connMaxLifetime" json:"connMaxLifetime"`
+	DBFile          string `yaml:"dbFile" json:"dbFile"`
+	EnableLog       bool   `yaml:"enableLog" json:"enableLog"`
+	MaxIdleConns    int    `yaml:"maxIdleConns" json:"maxIdleConns"`
+	MaxOpenConns    int    `yaml:"maxOpenConns" json:"maxOpenConns"`
+}
+
+type Mysql struct {
+	ConnMaxLifetime int      `yaml:"connMaxLifetime" json:"connMaxLifetime"`
+	Dsn             string   `yaml:"dsn" json:"dsn"`
+	EnableLog       bool     `yaml:"enableLog" json:"enableLog"`
+	MastersDsn      []string `yaml:"mastersDsn" json:"mastersDsn"`
+	MaxIdleConns    int      `yaml:"maxIdleConns" json:"maxIdleConns"`
+	MaxOpenConns    int      `yaml:"maxOpenConns" json:"maxOpenConns"`
+	SlavesDsn       []string `yaml:"slavesDsn" json:"slavesDsn"`
+}
+
+type Postgresql struct {
+	ConnMaxLifetime int    `yaml:"connMaxLifetime" json:"connMaxLifetime"`
+	Dsn             string `yaml:"dsn" json:"dsn"`
+	EnableLog       bool   `yaml:"enableLog" json:"enableLog"`
+	MaxIdleConns    int    `yaml:"maxIdleConns" json:"maxIdleConns"`
+	MaxOpenConns    int    `yaml:"maxOpenConns" json:"maxOpenConns"`
+}
+
+type Redis struct {
+	DialTimeout  int    `yaml:"dialTimeout" json:"dialTimeout"`
+	Dsn          string `yaml:"dsn" json:"dsn"`
+	ReadTimeout  int    `yaml:"readTimeout" json:"readTimeout"`
+	WriteTimeout int    `yaml:"writeTimeout" json:"writeTimeout"`
+}
+
+type RabbitMQ struct {
+	Dsn             string `yaml:"dsn" json:"dsn"`
+	EnableLog       bool   `yaml:"enableLog" json:"enableLog"`
+	MaxIdleConns    int    `yaml:"maxIdleConns" json:"maxIdleConns"`
+	MaxOpenConns    int    `yaml:"maxOpenConns" json:"maxOpenConns"`
+	ConnMaxLifetime int    `yaml:"connMaxLifetime" json:"connMaxLifetime"`
+}
+
+type Database struct {
+	Driver     string  `yaml:"driver" json:"driver"`
+	Mongodb    Mongodb `yaml:"mongodb" json:"mongodb"`
+	Mysql      Mysql   `yaml:"mysql" json:"mysql"`
+	Postgresql Mysql   `yaml:"postgresql" json:"postgresql"`
+	Sqlite     Sqlite  `yaml:"sqlite" json:"sqlite"`
+}
+
+type Mongodb struct {
+	Dsn string `yaml:"dsn" json:"dsn"`
+}
+
+type Grpc struct {
+	EnableToken  bool         `yaml:"enableToken" json:"enableToken"`
+	HTTPPort     int          `yaml:"httpPort" json:"httpPort"`
+	Port         int          `yaml:"port" json:"port"`
+	ServerSecure ServerSecure `yaml:"serverSecure" json:"serverSecure"`
+}
+
+type Logger struct {
+	Format string `yaml:"format" json:"format"`
+	IsSave bool   `yaml:"isSave" json:"isSave"`
+	Level  string `yaml:"level" json:"level"`
+}
+
+type NacosRd struct {
+	IPAddr      string `yaml:"ipAddr" json:"ipAddr"`
+	NamespaceID string `yaml:"namespaceID" json:"namespaceID"`
+	Port        int    `yaml:"port" json:"port"`
+}
+
+type HTTP struct {
+	Port    int `yaml:"port" json:"port"`
+	Timeout int `yaml:"timeout" json:"timeout"`
+}
+
+type Client struct {
+	ClientId                string        `yaml:"clientId" json:"clientId"`
+	ClientSecret            string        `yaml:"clientSecret" json:"clientSecret"`
+	Proxy                   string        `yaml:"proxy" json:"proxy"`
+	InvitationCodeExpireDay time.Duration `yaml:"invitation_code_expire_day" json:"invitationCodeExpireDay"`
+	InvitationCodeLength    int           `yaml:"invitation_code_length" json:"InvitationCodeLength"`
+	UploadPath              string        `yaml:"uploadPath" json:"uploadPath"`
 }

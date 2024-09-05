@@ -1,7 +1,6 @@
 package service
 
 import (
-	"novaro-server/config"
 	"novaro-server/dao"
 	"novaro-server/model"
 )
@@ -12,7 +11,7 @@ type TwitterUserService struct {
 
 func NewTwiitterUserService() *TwitterUserService {
 	return &TwitterUserService{
-		dao: dao.NewTwitterUserDao(config.DB),
+		dao: dao.NewTwitterUserDao(model.GetDB()),
 	}
 }
 

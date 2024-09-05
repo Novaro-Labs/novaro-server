@@ -1,7 +1,6 @@
 package service
 
 import (
-	"novaro-server/config"
 	"novaro-server/dao"
 	"novaro-server/model"
 )
@@ -12,7 +11,7 @@ type EventsService struct {
 
 func NewEventsService() *EventsService {
 	return &EventsService{
-		dao: dao.NewEventsDao(config.DB),
+		dao: dao.NewEventsDao(model.GetDB()),
 	}
 }
 

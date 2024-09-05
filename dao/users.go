@@ -37,6 +37,6 @@ func (d *UsersDao) UserExists(userId string) (bool, error) {
 
 func (d *UsersDao) GetById(id string) (model.Users, error) {
 	var user model.Users
-	tx := d.db.Where("id = ?", id).Find(&user)
+	tx := d.db.Model(&model.Users{}).Joins("left join nft_info on nft_info.wallet = users.wallet_public_key").Where("users.id = ?", id).First(&user)
 	return user, tx.Error
 }

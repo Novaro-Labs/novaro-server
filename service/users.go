@@ -1,7 +1,6 @@
 package service
 
 import (
-	"novaro-server/config"
 	"novaro-server/dao"
 	"novaro-server/model"
 )
@@ -12,7 +11,7 @@ type UserService struct {
 
 func NewUserService() *UserService {
 	return &UserService{
-		dao: dao.NewUsersDao(config.DB),
+		dao: dao.NewUsersDao(model.GetDB()),
 	}
 }
 
