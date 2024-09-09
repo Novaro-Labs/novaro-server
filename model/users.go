@@ -21,7 +21,7 @@ type Users struct {
 	CreditScore     float64   `json:"creditScore"`
 	CreatedAt       time.Time `json:"createdAt"`
 	LastLogin       time.Time `json:"lastLogin"`
-	NftInfo         *NftInfo  `json:"nftInfo" gorm:"-"`
+	NftInfo         *NftInfo  `json:"nftInfo" gorm:"foreignKey:Wallet;references:WalletPublicKey"`
 }
 
 func (Users) TableName() string {
@@ -32,4 +32,14 @@ func (u *Users) BeforeCreate(tx *gorm.DB) error {
 	u2 := uuid.New()
 	u.Id = strings.ReplaceAll(u2.String(), "-", "")
 	return nil
+}
+
+func (u *Users) Points(wattle *string, nftLevel int) int {
+	if wattle == nil {
+		return 0
+	}
+	defaultPoints := 5
+	rewards := nftLevel
+
+	return (nftLevel * defaultPoints) + rewards
 }

@@ -1,27 +1,38 @@
 package dao
 
 import (
+	"context"
 	"fmt"
+	"github.com/redis/go-redis/v9"
+	"github.com/zhufuyi/sponge/pkg/logger"
 	"gorm.io/gorm"
 	"novaro-server/model"
 )
 
 type CommentsDao struct {
-	db *gorm.DB
+	db  *gorm.DB
+	rdb *redis.Client
 }
 
 func NewCommentsDao(db *gorm.DB) *CommentsDao {
 	return &CommentsDao{
-		db: db,
+		db:  db,
+		rdb: model.GetRedisCli(),
 	}
 }
 
-func (d *CommentsDao) Create(c *model.Comments) error {
-	tx := d.db.Create(&c)
-	return tx.Error
+func (d *CommentsDao) Create(c *model.Comments) (int64, error) {
+	err := d.db.Create(&c).Error
+
+	var count int64
+	if err == nil {
+		key := fmt.Sprintf("post:%s:comment_count", c.PostId)
+		count, err = d.rdb.Incr(context.Background(), key).Result()
+	}
+	return count, err
 }
 
-func (d *CommentsDao) GetById(id string) (resp model.Comments, err error) {
+func (d *CommentsDao) GetById(id string) (resp *model.Comments, err error) {
 	tx := d.db.Where("id = ?", id).First(&resp)
 	return resp, tx.Error
 }
@@ -59,7 +70,35 @@ func (d *CommentsDao) GetListByUserId(userId string) (resp []model.Comments, err
 	return resp, nil
 }
 
-func (d *CommentsDao) DeleteById(id string) error {
-	tx := d.db.Table("comments").Where("id = ?", id).Delete(&model.Comments{})
-	return tx.Error
+func (d *CommentsDao) DeleteById(id, postId string) (int64, error) {
+	err := d.db.Table("comments").Where("id = ?", id).Delete(&model.Comments{}).Error
+	fmt.Println(err)
+	var count int64
+	if err == nil {
+		key := fmt.Sprintf("post:%s:comment_count", postId)
+		count, err = d.rdb.Decr(context.Background(), key).Result()
+	}
+	return count, err
+}
+
+func (d *CommentsDao) SyncCommentsToDB() ([]string, *redis.Client) {
+	ctx := context.Background()
+	result, err := d.rdb.Keys(ctx, "post:*:comment_count").Result()
+	if err != nil {
+		logger.Error("redis get comments keys error", logger.Err(err))
+		return nil, nil
+	}
+	return result, d.rdb
+}
+
+func (d *CommentsDao) GetCommentCount(postId string) (int64, error) {
+	ctx := context.Background()
+	key := fmt.Sprintf("post:%s:comment_count", postId)
+	i, err := d.rdb.Get(ctx, key).Int64()
+	if err == nil {
+		return i, nil
+	}
+
+	err = d.db.Model(&model.Comments{}).Where("post_id = ?", postId).Count(&i).Error
+	return i, err
 }

@@ -17,16 +17,16 @@ func NewPostsDao(db *gorm.DB) *PostsDao {
 }
 
 func (d *PostsDao) GetPostsList(p *model.PostsQuery) (resp []model.Posts, err error) {
-	query := d.db.Table("posts")
+	query := d.db.Table("posts").Limit(p.Size).Offset(p.Page * p.Size)
 	if p.Id != "" {
 		query = query.Where("id = ?", p.Id)
 	}
 
-	err = query.Find(&resp).Error
+	err = query.Order("created_at desc").Find(&resp).Error
 	return resp, err
 }
 
-func (d *PostsDao) GetPostsById(id string) (resp model.Posts, err error) {
+func (d *PostsDao) GetPostsById(id string) (resp *model.Posts, err error) {
 	err = d.db.Table("posts").Where("id = ?", id).Find(&resp).Error
 	return resp, err
 }
@@ -73,6 +73,10 @@ func (d *PostsDao) Save(tx *gorm.DB, posts *model.Posts) error {
 func (d *PostsDao) Update(posts *model.Posts) error {
 	tx := d.db.Updates(&posts)
 	return tx.Error
+}
+func (d *PostsDao) UpdateCount(id string, count int64) error {
+	err := d.db.Model(&model.Posts{}).Where("id = ?", id).Update("comments_amount", count).Error
+	return err
 }
 
 func (d *PostsDao) UpdateBatch(posts []model.Posts) error {

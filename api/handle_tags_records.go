@@ -42,3 +42,7 @@ func (api *TagsRecordsApi) AddTagsRecords(c *gin.Context) {
 	}
 	c.JSON(200, gin.H{"message": "Successfully added tags records"})
 }
+
+func (api *TagsRecordsApi) SyncData() {
+	api.service.SyncData()
+}

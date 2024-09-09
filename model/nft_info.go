@@ -3,7 +3,6 @@ package model
 import (
 	"github.com/google/uuid"
 	"gorm.io/gorm"
-	"math"
 	"strings"
 	"time"
 )
@@ -23,17 +22,4 @@ func (u *NftInfo) BeforeCreate(tx *gorm.DB) error {
 	u2 := uuid.New()
 	u.Id = strings.ReplaceAll(u2.String(), "-", "")
 	return nil
-}
-
-func (u *NftInfo) TagPoints(count int64) float64 {
-	totalPoints := float64(1)
-
-	if count > 0 {
-		count = count / 10
-	}
-
-	coefficients := float64(count)
-
-	rewards := (totalPoints - coefficients) * totalPoints
-	return math.Max(0, rewards)
 }
