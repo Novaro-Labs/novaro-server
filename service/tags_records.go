@@ -8,6 +8,7 @@ import (
 	"github.com/redis/go-redis/v9"
 	"github.com/zhufuyi/sponge/pkg/logger"
 	"log"
+	"math"
 	"novaro-server/dao"
 	"novaro-server/model"
 	"sync"
@@ -53,25 +54,24 @@ func (s *TagsRecordService) Create(records *model.TagsRecords) error {
 	}
 
 	var err1 error
-	exists, source := s.RecordsExists(records.TagId, records.PostId, records.UserId)
+	exists, _ := s.RecordsExists(records.TagId, records.PostId, records.UserId)
 	if exists {
-		err1 = s.removeRecords(records, source)
+		err1 = s.removeRecords(records)
 	} else {
 		err1 = s.addRecords(records, post, user)
 	}
-
 	return err1
 }
 
 func (s *TagsRecordService) RecordsExists(tagId, postId, userId string) (bool, string) {
-
-	result, _ := s.rdb.SMembers(context.Background(), fmt.Sprintf("user:tags:%s:%s", userId, postId)).Result()
-	if len(result) == 0 {
+	key := fmt.Sprintf("tags:expiry:%s", postId)
+	member := fmt.Sprintf("%s:%s", tagId, userId)
+	_, err := s.rdb.ZScore(context.Background(), key, member).Result()
+	if err == redis.Nil {
 		count := s.dao.GetRecord(tagId, postId, userId)
 		return count > 0, "db"
 	}
-	return len(result) > 0, "cache"
-
+	return true, "cache"
 }
 
 func (s *TagsRecordService) SyncData() {
@@ -80,32 +80,39 @@ func (s *TagsRecordService) SyncData() {
 }
 
 func (s *TagsRecordService) addRecords(r *model.TagsRecords, post *model.Posts, user *model.Users) error {
-	err2 := s.addCacheRecords(r.UserId, r.PostId, r.TagId)
-	if err2 != nil {
-		return fmt.Errorf("exec error: %v", err2)
+	count, err := s.addCacheRecords(r.UserId, r.PostId, r.TagId)
+	if err != nil {
+		logger.Errorf("add cache records error: %v", err)
+		return err
+	}
+
+	points := s.TagPoints(user.WalletPublicKey, count)
+	postUser, err := s.userDao.GetById(post.UserId)
+
+	var postPoints int64
+	if err != nil || postUser.NftInfo == nil {
+		postPoints = 0
+	} else {
+		postPoints = s.dao.Points(postUser.WalletPublicKey, postUser.NftInfo.Level)
 	}
 
 	record := model.TagRecordQueue{
 		TagId:      r.TagId,
 		PostId:     r.PostId,
 		UserId:     r.UserId,
-		Points:     0,
-		PostPoints: 0,
+		Points:     points,
+		PostPoints: float64(postPoints),
 		Operation:  "a",
 		CreatedAt:  time.Now(),
 	}
 	return s.sendToRabbitMQ(&record)
 }
 
-func (s *TagsRecordService) removeRecords(r *model.TagsRecords, source string) error {
-	if source == "db" {
-		err := s.dao.Delete(r)
-		return err
-	}
-
+func (s *TagsRecordService) removeRecords(r *model.TagsRecords) error {
 	err := s.removeCacheRecords(r.UserId, r.PostId, r.TagId)
 	if err != nil {
-		return fmt.Errorf("exec error: %v", err)
+		logger.Errorf("remove cache records error: %v", err)
+		return err
 	}
 	queue := model.TagRecordQueue{
 		TagId:      r.TagId,
@@ -263,29 +270,120 @@ loop:
 	return err
 }
 
-func (s *TagsRecordService) addCacheRecords(userId, postId, tagId string) error {
+func (s *TagsRecordService) addCacheRecords(userId, postId, tagId string) (int64, error) {
 	pipeline := s.rdb.Pipeline()
+	key := fmt.Sprintf("tags:expiry:%s", postId)
+	countKey := fmt.Sprintf("tags:count:%s", postId)
 	ctx := context.Background()
-	key := fmt.Sprintf("tags:count:%s", postId)
-	key2 := fmt.Sprintf("user:tags:%s:%s", userId, postId)
+	now := float64(time.Now().Unix())
+	member := fmt.Sprintf("%s:%s", tagId, userId)
+	pipeline.ZAdd(ctx, key, redis.Z{Score: now, Member: member}).Result()
+	pipeline.HIncrBy(ctx, countKey, tagId, 1)
 
-	pipeline.ZIncrBy(ctx, key, 1, tagId)
-	pipeline.SAdd(ctx, key2, tagId)
+	key3 := fmt.Sprintf("user:tags:expiry:%s", userId)
+	count, err2 := pipeline.Get(ctx, key3).Int()
+	if err2 == redis.Nil {
+		count = 0
+	}
+	incr := pipeline.Incr(ctx, key3)
 
-	pipeline.Expire(ctx, key, 5*time.Minute)
-	pipeline.Expire(ctx, key2, 5*time.Minute)
-	_, err := pipeline.Exec(ctx)
-	return err
+	if count == 0 {
+		now := time.Now()
+		tomorrow := time.Date(now.Year(), now.Month(), now.Day()+1, 0, 0, 0, 0, now.Location())
+		ttl := tomorrow.Sub(now)
+		pipeline.Expire(ctx, key3, ttl)
+	}
+
+	_, err3 := pipeline.Exec(ctx)
+
+	if err3 != nil && err3 != redis.Nil {
+		return 0, err3
+	}
+	return incr.Result()
 }
 
 func (s *TagsRecordService) removeCacheRecords(userId, postId, tagId string) error {
 	pipeline := s.rdb.Pipeline()
 	ctx := context.Background()
-	key := fmt.Sprintf("tags:count:%s", postId)
-	key2 := fmt.Sprintf("user:tags:%s:%s", userId, postId)
+	key := fmt.Sprintf("tags:expiry:%s", postId)
+	member := fmt.Sprintf("%s:%s", tagId, userId)
+	pipeline.ZRem(ctx, key, member)
 
-	pipeline.ZIncrBy(ctx, key, -1, tagId)
-	pipeline.SRem(ctx, key2, tagId)
+	key3 := fmt.Sprintf("user:tags:expiry:%s", userId)
+	pipeline.Decr(ctx, key3)
 	_, err := pipeline.Exec(ctx)
 	return err
+}
+
+func (s *TagsRecordService) TagPoints(wattle *string, count int64) float64 {
+	if wattle == nil {
+		return 0
+	}
+
+	totalPoints := float64(1)
+
+	if count > 0 {
+		count = count / 10
+	}
+
+	coefficients := float64(count)
+	rewards := (totalPoints - coefficients) * totalPoints
+	return math.Max(0, rewards)
+}
+
+func (s *TagsRecordService) CleanExpiredTags() {
+	expirationDuration := 1 * time.Minute
+	ctx := context.Background()
+
+	// 计算过期时间点
+	expirationThreshold := time.Now().Add(-expirationDuration).Unix()
+
+	var totalRemoved int64
+	var mu sync.Mutex
+
+	workerCount := 10
+	jobs := make(chan string, 100)
+	var wg sync.WaitGroup
+
+	worker := func() {
+		defer wg.Done()
+		for key := range jobs {
+			removed, err := s.rdb.ZRemRangeByScore(ctx, key, "0", fmt.Sprintf("%d", expirationThreshold)).Result()
+			if err != nil {
+				logger.Errorf("error removing expired tags for key %s: %v", key, err)
+			} else {
+				mu.Lock()
+				totalRemoved += removed
+				mu.Unlock()
+			}
+		}
+	}
+
+	for i := 0; i < workerCount; i++ {
+		wg.Add(1)
+		go worker()
+	}
+
+	var cursor uint64
+	for {
+		var keys []string
+		var err error
+		keys, cursor, err = s.rdb.Scan(ctx, cursor, "tags:expiry:*", 100).Result()
+		if err != nil {
+			logger.Errorf("error scanning keys: %v", err)
+			continue
+		}
+
+		for _, key := range keys {
+			jobs <- key
+		}
+
+		if cursor == 0 {
+			break
+		}
+	}
+
+	close(jobs)
+	wg.Wait()
+	logger.Debugf("expired tags total:%d", totalRemoved)
 }

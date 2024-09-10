@@ -31,3 +31,10 @@ func (d *NftInfoDao) GetByWallet(wallet string) (model.NftInfo, error) {
 	return resp, err
 
 }
+
+func (d *NftInfoDao) Updates(info *model.NftInfo) (*model.NftInfo, error) {
+	err := d.db.Model(&model.NftInfo{}).Where("wallet = ?", info.Wallet).Updates(&info).Error
+
+	wallet, err := d.GetByWallet(info.Wallet)
+	return &wallet, err
+}

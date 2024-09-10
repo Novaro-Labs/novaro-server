@@ -6,6 +6,7 @@ import (
 	"github.com/redis/go-redis/v9"
 	"gorm.io/gorm"
 	"novaro-server/model"
+	"strconv"
 	"sync"
 	"time"
 )
@@ -52,7 +53,7 @@ func (d *TagsRecordDao) GetTagsRecordsByPostId(post *model.Posts) ([]model.TagRe
 	var wg sync.WaitGroup
 	resultMap := make(map[string]*model.TagRecordResponse)
 	var mysqlErr, redisErr error
-	var redisResult []redis.Z
+	var redisResult map[string]string
 
 	var sqlResults []model.TagRecordResponse
 
@@ -74,7 +75,7 @@ func (d *TagsRecordDao) GetTagsRecordsByPostId(post *model.Posts) ([]model.TagRe
 	go func() {
 		defer wg.Done()
 		key := fmt.Sprintf("tags:count:%s", post.Id)
-		redisResult, redisErr = d.rdb.ZRangeWithScores(context.Background(), key, 0, -1).Result()
+		redisResult, redisErr = d.rdb.HGetAll(context.Background(), key).Result()
 	}()
 
 	// 等待两个协程完成
@@ -89,15 +90,19 @@ func (d *TagsRecordDao) GetTagsRecordsByPostId(post *model.Posts) ([]model.TagRe
 	}
 
 	// 合并 Redis 结果
-	for _, z := range redisResult {
-		id, _ := z.Member.(string)
-		count := int(z.Score)
+	for field, value := range redisResult {
 
-		if record, exists := resultMap[id]; exists {
+		count, err := strconv.Atoi(value)
+		if err != nil {
+			count = 0
+		}
+
+		if record, exists := resultMap[field]; exists {
+
 			record.Count += count
 		} else {
-			resultMap[id] = &model.TagRecordResponse{
-				Id:    id,
+			resultMap[field] = &model.TagRecordResponse{
+				Id:    field,
 				Count: count,
 			}
 		}
@@ -112,4 +117,13 @@ func (d *TagsRecordDao) GetTagsRecordsByPostId(post *model.Posts) ([]model.TagRe
 	}
 
 	return result, total, nil
+}
+func (d *TagsRecordDao) Points(wattle *string, nftLevel int) int64 {
+	if wattle == nil {
+		return 0
+	}
+	defaultPoints := 5
+	rewards := nftLevel
+
+	return int64((nftLevel * defaultPoints) + rewards)
 }

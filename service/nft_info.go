@@ -26,3 +26,7 @@ func (s *NftInfoService) UpdateScore(wallet string, score float64) error {
 func (s *NftInfoService) GetByWallet(wallet string) (model.NftInfo, error) {
 	return s.dao.GetByWallet(wallet)
 }
+
+func (s *NftInfoService) Updates(info *model.NftInfo) (*model.NftInfo, error) {
+	return s.dao.Updates(info)
+}

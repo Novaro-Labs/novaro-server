@@ -2,6 +2,7 @@ package api
 
 import (
 	"github.com/gin-gonic/gin"
+	"novaro-server/model"
 	"novaro-server/service"
 )
 
@@ -39,4 +40,32 @@ func (api *NftInfoApi) GetNftInfo(c *gin.Context) {
 		"data": wallet,
 		"msg":  "success",
 	})
+}
+
+func (api *NftInfoApi) Updates(c *gin.Context) {
+	var nftInfo model.NftInfo
+	err := c.ShouldBindJSON(&nftInfo)
+	if err != nil {
+		c.JSON(400, gin.H{
+			"code": 400,
+			"msg":  err.Error(),
+		})
+		return
+	}
+
+	updates, err := api.service.Updates(&nftInfo)
+	if err != nil {
+		c.JSON(400, gin.H{
+			"code": 400,
+			"msg":  err.Error(),
+		})
+		return
+	}
+
+	c.JSON(200, gin.H{
+		"code": 200,
+		"data": updates,
+		"msg":  "success",
+	})
+
 }

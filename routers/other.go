@@ -13,11 +13,6 @@ func AddOtherRoutes(r *gin.RouterGroup) {
 	collections := r.Group("/api/collections")
 	{
 		collectionsApi := api.NewCollectionsApi()
-		// 定时器
-		cron.AddJob("@every 5m", func() {
-			//collectionsApi.Sync()
-		})
-
 		collections.POST("/add", collectionsApi.Create)
 	}
 
@@ -26,7 +21,7 @@ func AddOtherRoutes(r *gin.RouterGroup) {
 		commentsApi := api.NewCommentApi()
 
 		cron.AddJob("@every 30s", func() {
-			commentsApi.SyncCommentsToDB()
+			//commentsApi.SyncCommentsToDB()
 		})
 
 		comments.GET("/getCommentsListByPostId", commentsApi.GetCommentsListByPostId)
@@ -39,23 +34,12 @@ func AddOtherRoutes(r *gin.RouterGroup) {
 	posts := r.Group("/api/posts")
 	{
 		postsApi := api.NewPostsApi()
-
-		cron.AddJob("@every 3s", func() {
-			//postsApi.SyncData()
-		})
-
 		//posts.GET("/getPostsById", postsApi.GetPostsById)
 		//posts.GET("/getPostsByUserId", postsApi.GetPostsByUserId)
 		posts.POST("/list", postsApi.GetPostsList)
 		posts.PUT("/save", postsApi.SavePosts)
 		posts.PUT("/resave", postsApi.SavePosts)
 		posts.DELETE("/delete", postsApi.DelPostsById)
-	}
-
-	reposts := r.Group("/api/reposts")
-	{
-		postsApi := api.NewRePostApi()
-		reposts.POST("/add", postsApi.AddRePosts)
 	}
 
 	tags := r.Group("/api/tags")
@@ -68,7 +52,7 @@ func AddOtherRoutes(r *gin.RouterGroup) {
 	{
 
 		recordsApi := api.NewTagsRecordApi()
-		cron.AddJob("@every 3s", func() {
+		cron.AddJob("@every 30s", func() {
 			//recordsApi.SyncData()
 		})
 
@@ -101,6 +85,7 @@ func AddOtherRoutes(r *gin.RouterGroup) {
 	{
 		nftApi := api.NewNftInfoApi()
 		nft.GET("/info", nftApi.GetNftInfo)
+		nft.POST("/update", nftApi.Updates)
 	}
 
 	cron.Start()

@@ -22,7 +22,10 @@ func (api *CollectionsApi) Create(c *gin.Context) {
 	var collections model.Collections
 
 	if err := c.ShouldBindJSON(&collections); err != nil {
-		c.JSON(400, gin.H{"msg": err.Error()})
+		c.JSON(400, gin.H{
+			"code": 400,
+			"msg":  err.Error(),
+		})
 		return
 	}
 
@@ -33,7 +36,10 @@ func (api *CollectionsApi) Create(c *gin.Context) {
 
 	// 收藏
 	if err := api.service.AddOrRemove(&collections); err != nil {
-		c.JSON(400, gin.H{"msg": err.Error()})
+		c.JSON(400, gin.H{
+			"code": 400,
+			"msg":  err.Error(),
+		})
 		return
 	}
 	c.JSON(200, gin.H{

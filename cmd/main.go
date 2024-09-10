@@ -37,4 +37,5 @@ func initDB() {
 	db.AutoMigrate(&model.TwitterUsers{})
 	db.AutoMigrate(&model.TwitterUserInfo{})
 	db.AutoMigrate(&model.Users{})
+	db.AutoMigrate(&model.PostPoints{})
 }

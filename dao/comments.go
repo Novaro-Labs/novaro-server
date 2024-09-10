@@ -6,6 +6,7 @@ import (
 	"github.com/redis/go-redis/v9"
 	"github.com/zhufuyi/sponge/pkg/logger"
 	"gorm.io/gorm"
+	"log"
 	"novaro-server/model"
 )
 
@@ -100,5 +101,10 @@ func (d *CommentsDao) GetCommentCount(postId string) (int64, error) {
 	}
 
 	err = d.db.Model(&model.Comments{}).Where("post_id = ?", postId).Count(&i).Error
+	_, err = d.rdb.Set(ctx, key, i, 0).Result()
+	if err != nil {
+		// 这里我们只记录错误，不返回，因为我们已经有了正确的计数
+		log.Printf("Failed to set Redis cache: %v", err)
+	}
 	return i, err
 }

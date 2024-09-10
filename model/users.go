@@ -33,13 +33,3 @@ func (u *Users) BeforeCreate(tx *gorm.DB) error {
 	u.Id = strings.ReplaceAll(u2.String(), "-", "")
 	return nil
 }
-
-func (u *Users) Points(wattle *string, nftLevel int) int {
-	if wattle == nil {
-		return 0
-	}
-	defaultPoints := 5
-	rewards := nftLevel
-
-	return (nftLevel * defaultPoints) + rewards
-}

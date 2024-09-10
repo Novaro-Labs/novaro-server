@@ -2,16 +2,16 @@ package service
 
 import (
 	"fmt"
-	"github.com/redis/go-redis/v9"
+	"github.com/zhufuyi/sponge/pkg/logger"
 	"gorm.io/gorm"
 	"novaro-server/dao"
 	"novaro-server/model"
 	"sync"
+	"time"
 )
 
 type PostService struct {
 	dao              *dao.PostsDao
-	rdb              *redis.Client
 	collectionDao    *dao.CollectionsDao
 	tagsDao          *dao.TagsDao
 	imgsDao          *dao.ImgsDao
@@ -19,13 +19,13 @@ type PostService struct {
 	pointsHistoryDao *dao.PointsHistoryDao
 	commentsDao      *dao.CommentsDao
 	tagRecordDao     *dao.TagsRecordDao
+	postPointsDao    *dao.PostPointsDao
 }
 
 func NewPostService() *PostService {
 	db := model.GetDB()
 	return &PostService{
 		dao:              dao.NewPostsDao(db),
-		rdb:              model.GetRedisCli(),
 		collectionDao:    dao.NewCollectionsDao(db),
 		tagsDao:          dao.NewTagsDao(db),
 		imgsDao:          dao.NewImgsDao(db),
@@ -33,6 +33,7 @@ func NewPostService() *PostService {
 		commentsDao:      dao.NewCommentsDao(db),
 		userDao:          dao.NewUsersDao(db),
 		tagRecordDao:     dao.NewTagsRecordDao(db),
+		postPointsDao:    dao.NewPostPointsDao(db),
 	}
 }
 
@@ -55,6 +56,10 @@ func (s *PostService) GetList(p *model.PostsQuery) (resp []model.Posts, err erro
 			tags, total, _ := s.tagRecordDao.GetTagsRecordsByPostId(&resp[i])
 			resp[i].Tags = tags
 			resp[i].TagsAmount = total
+
+			count, _ := s.commentsDao.GetCommentCount(resp[i].Id)
+			resp[i].CommentsAmount = count
+
 			// 获取图片
 			source, err2 := s.imgsDao.GetImgsBySourceId(resp[i].SourceId)
 			if err2 != nil {
@@ -110,24 +115,18 @@ func (s *PostService) Save(posts *model.Posts) error {
 			return fmt.Errorf("failed to save post: %w", err)
 		}
 
-		// 计算积分
-		count, err := s.dao.GetCountByUserId(posts.UserId)
-		if err != nil {
-			return fmt.Errorf("failed to get post count: %w", err)
+		points, err2 := s.dao.CalculateCommission(posts.UserId)
+		if err2 != nil {
+			points = 0
 		}
-		point := s.calculatePoints(count)
 
-		// 创建积分历史记录
 		if user.WalletPublicKey != nil {
-			history := model.PointsHistory{
-				Wallet: user.WalletPublicKey,
-				Points: float64(point),
-				Status: 0,
-			}
-
-			if err := s.pointsHistoryDao.Create(tx, &history); err != nil {
-				return fmt.Errorf("failed to create points history: %w", err)
-			}
+			err2 := s.postPointsDao.Save(tx, &model.PostPoints{
+				PostId:    posts.Id,
+				Points:    float64(points),
+				CreatedAt: time.Now(),
+			})
+			logger.Errorf("failed to save post points: %v", err2)
 		}
 
 		return nil
@@ -144,16 +143,20 @@ func (s *PostService) UpdateBatch(posts []model.Posts) error {
 }
 
 func (s *PostService) Delete(id string) error {
-	return s.dao.Delete(id)
-}
+	err := model.GetDB().Transaction(func(tx *gorm.DB) error {
+		err := s.dao.Delete(tx, id)
+		if err != nil {
+			logger.Errorf("failed to delete post: %v", err)
+			return err
+		}
 
-func (s *PostService) calculatePoints(value int64) int {
-	switch value {
-	case 0:
-		return 20
-	case 1:
-		return 10
-	default:
-		return 0
-	}
+		err = s.postPointsDao.Delete(tx, id)
+		if err != nil {
+			logger.Errorf("failed to delete post_points: %v", err)
+			return err
+		}
+
+		return nil
+	})
+	return err
 }

@@ -26,7 +26,10 @@ func NewTagsApi() *TagsApi {
 func (api *TagsApi) GetTagsList(c *gin.Context) {
 	tags, err := api.service.GetTagsList()
 	if err != nil {
-		c.JSON(400, gin.H{"error": err.Error()})
+		c.JSON(400, gin.H{
+			"code": 400,
+			"msg":  err.Error(),
+		})
 		return
 	}
 	c.JSON(200, gin.H{

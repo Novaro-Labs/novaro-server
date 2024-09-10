@@ -36,13 +36,19 @@ func NewPostsApi() *PostsApi {
 func (api *PostsApi) GetPostsList(c *gin.Context) {
 	var postsQuery model.PostsQuery
 	if err := c.ShouldBind(&postsQuery); err != nil {
-		c.JSON(400, gin.H{"error": err.Error()})
+		c.JSON(400, gin.H{
+			"code": 400,
+			"msg":  err.Error(),
+		})
 		return
 	}
 
 	resp, err := api.service.GetList(&postsQuery)
 	if err != nil {
-		c.JSON(400, gin.H{"error": err.Error()})
+		c.JSON(400, gin.H{
+			"code": 400,
+			"msg":  err.Error(),
+		})
 		return
 	}
 	c.JSON(200, gin.H{
@@ -65,12 +71,18 @@ func (api *PostsApi) SavePosts(c *gin.Context) {
 	var posts model.Posts
 
 	if err := c.ShouldBindJSON(&posts); err != nil {
-		c.JSON(400, gin.H{"error": err.Error()})
+		c.JSON(400, gin.H{
+			"code": 400,
+			"msg":  err.Error(),
+		})
 		return
 	}
 
 	if err := api.service.Save(&posts); err != nil {
-		c.JSON(400, gin.H{"error": err.Error()})
+		c.JSON(400, gin.H{
+			"code": 400,
+			"msg":  err.Error(),
+		})
 		return
 	}
 	c.JSON(200, gin.H{
@@ -93,12 +105,26 @@ func (api *PostsApi) SaveReposts(c *gin.Context) {
 	var posts model.Posts
 
 	if err := c.ShouldBindJSON(&posts); err != nil {
-		c.JSON(400, gin.H{"error": err.Error()})
+		c.JSON(400, gin.H{
+			"code": 400,
+			"msg":  err.Error(),
+		})
+		return
+	}
+
+	if posts.OriginalId == "" {
+		c.JSON(400, gin.H{
+			"code": 400,
+			"msg":  "OriginalId is required",
+		})
 		return
 	}
 
 	if err := api.service.Save(&posts); err != nil {
-		c.JSON(400, gin.H{"error": err.Error()})
+		c.JSON(400, gin.H{
+			"code": 400,
+			"msg":  err.Error(),
+		})
 		return
 	}
 	c.JSON(200, gin.H{
@@ -125,7 +151,10 @@ func (api *PostsApi) DelPostsById(c *gin.Context) {
 	}
 
 	if err := api.service.Delete(id); err != nil {
-		c.JSON(400, gin.H{"error": err.Error()})
+		c.JSON(400, gin.H{
+			"code": 400,
+			"msg":  err.Error(),
+		})
 		return
 	}
 	c.JSON(200, gin.H{

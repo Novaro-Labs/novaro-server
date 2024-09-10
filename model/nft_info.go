@@ -11,7 +11,7 @@ type NftInfo struct {
 	Id        string    `json:"id"`
 	Wallet    string    `json:"wallet"`
 	Level     int       `json:"level"`
-	Score     float64   `json:"score"`
+	points    float64   `json:"points"`
 	Create_at time.Time `json:"createAt"`
 }
 

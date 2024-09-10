@@ -1,18 +1,23 @@
 package dao
 
 import (
+	"context"
+	"fmt"
+	"github.com/redis/go-redis/v9"
 	"gorm.io/gorm"
 	"novaro-server/model"
 	"time"
 )
 
 type PostsDao struct {
-	db *gorm.DB
+	db  *gorm.DB
+	rdb *redis.Client
 }
 
 func NewPostsDao(db *gorm.DB) *PostsDao {
 	return &PostsDao{
-		db: db,
+		db:  db,
+		rdb: model.GetRedisCli(),
 	}
 }
 
@@ -67,9 +72,14 @@ func (d *PostsDao) Save(tx *gorm.DB, posts *model.Posts) error {
 	if tx == nil {
 		tx = d.db
 	}
-	return tx.Create(&data).Error
-}
 
+	var err error
+	err = tx.Create(&data).Error
+	if err == nil && data.OriginalId != "" {
+		err = d.UpdateRePostCount(data.OriginalId)
+	}
+	return err
+}
 func (d *PostsDao) Update(posts *model.Posts) error {
 	tx := d.db.Updates(&posts)
 	return tx.Error
@@ -78,7 +88,10 @@ func (d *PostsDao) UpdateCount(id string, count int64) error {
 	err := d.db.Model(&model.Posts{}).Where("id = ?", id).Update("comments_amount", count).Error
 	return err
 }
-
+func (d *PostsDao) UpdateRePostCount(id string) error {
+	err := d.db.Model(&model.Posts{}).Where("id = ?", id).UpdateColumn("reposts_count", gorm.Expr("reposts_count + ?", 1)).Error
+	return err
+}
 func (d *PostsDao) UpdateBatch(posts []model.Posts) error {
 	// 开始事务
 	err := d.db.Transaction(func(tx *gorm.DB) error {
@@ -98,8 +111,63 @@ func (d *PostsDao) UpdateBatch(posts []model.Posts) error {
 	})
 	return err
 }
+func (d *PostsDao) Delete(tx *gorm.DB, id string) error {
+	if tx == nil {
+		tx = d.db
+	}
 
-func (d *PostsDao) Delete(id string) error {
-	tx := d.db.Where("id = ?", id).Delete(&model.Posts{})
-	return tx.Error
+	resp, err2 := d.GetPostsById(id)
+	if err2 == nil && resp.Id != "" {
+		err2 = tx.Where("id = ?", id).Delete(&model.Posts{}).Error
+		d.DeleteCache(resp.UserId)
+	}
+	return err2
+}
+
+func (d *PostsDao) CalculateCommission(userId string) (int64, error) {
+	ctx := context.Background()
+	key := fmt.Sprintf("user:%s:posts:count", userId)
+
+	count, err := d.rdb.Get(ctx, key).Int()
+	if err == redis.Nil {
+		count = 0
+	}
+
+	result, err := d.rdb.Incr(ctx, key).Result()
+	if err != nil {
+		return 0, err
+	}
+
+	if count == 0 {
+		now := time.Now()
+		tomorrow := time.Date(now.Year(), now.Month(), now.Day()+1, 0, 0, 0, 0, now.Location())
+		ttl := tomorrow.Sub(now)
+		d.rdb.Expire(ctx, key, ttl)
+	}
+	points := d.calculatePoints(result)
+	return points, nil
+}
+
+// 计算返佣
+func (d *PostsDao) calculatePoints(value int64) int64 {
+	switch value {
+	case 1:
+		return 20
+	case 2:
+		return 10
+	default:
+		return 0
+	}
+}
+
+func (d *PostsDao) DeleteCache(userId string) error {
+	ctx := context.Background()
+	key := fmt.Sprintf("user:%s:posts:count", userId)
+
+	_, err := d.rdb.Get(ctx, key).Int()
+	if err != redis.Nil {
+		d.rdb.Decr(ctx, key)
+	}
+	return nil
+
 }
