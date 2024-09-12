@@ -36,6 +36,12 @@ func (d *PostsDao) GetPostsById(id string) (resp *model.Posts, err error) {
 	return resp, err
 }
 
+func (d *PostsDao) GetPostIdByUser(postId string) *model.Posts {
+	var post model.Posts
+	d.db.Model(model.Posts{}).Preload("User").Where("id = ?", postId).First(&post)
+	return &post
+}
+
 func (d *PostsDao) PostExists(id string) (bool, error) {
 	var count int64
 	err := d.db.Model(&model.Posts{}).Where("id = ?", id).Count(&count).Error

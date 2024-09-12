@@ -19,6 +19,7 @@ type Posts struct {
 	OriginalId        string              `json:"originalId"`
 	ViewAmount        int                 `json:"viewAmount"`
 	SourceId          string              `json:"sourceId"`
+	User              *Users              `json:"user" gorm:"foreignKey:id;references:UserId"`
 	Tags              []TagRecordResponse `json:"tags" gorm:"-"`
 	Imgs              []Imgs              `json:"Imgs" gorm:"-"`
 }

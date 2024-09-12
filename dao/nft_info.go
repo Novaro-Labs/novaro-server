@@ -2,6 +2,7 @@ package dao
 
 import (
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 	"novaro-server/model"
 )
 
@@ -27,14 +28,25 @@ func (d *NftInfoDao) UpdateScore(wallet string, score float64) error {
 
 func (d *NftInfoDao) GetByWallet(wallet string) (model.NftInfo, error) {
 	var resp model.NftInfo
-	err := d.db.Table("nft_info").Where("wallet = ?", wallet).Find(&resp).Error
+	err := d.db.Model(&model.NftInfo{}).Preload("Nft", func(db *gorm.DB) *gorm.DB {
+		return db.Select("Id, Right,Url ")
+	}).Where("wallet = ?", wallet).First(&resp).Error
 	return resp, err
-
 }
 
-func (d *NftInfoDao) Updates(info *model.NftInfo) (*model.NftInfo, error) {
-	err := d.db.Model(&model.NftInfo{}).Where("wallet = ?", info.Wallet).Updates(&info).Error
+func (d *NftInfoDao) UpdatePoints(tx *gorm.DB, info *model.NftInfoRequest) (float64, error) {
+	var nftInfo model.NftInfo
 
-	wallet, err := d.GetByWallet(info.Wallet)
-	return &wallet, err
+	if tx == nil {
+		tx = d.db
+	}
+
+	result := tx.Model(&model.NftInfo{}).Clauses(clause.Returning{Columns: []clause.Column{{Name: "points"}}}).Where("wallet = ?", info.Wallet).
+		UpdateColumn("points", gorm.Expr("points+?", info.Points)).
+		Scan(&nftInfo)
+
+	if result.Error != nil {
+		return 0, result.Error
+	}
+	return nftInfo.Points, nil
 }

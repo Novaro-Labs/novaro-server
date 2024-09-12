@@ -127,3 +127,20 @@ func (d *TagsRecordDao) Points(wattle *string, nftLevel int) int64 {
 
 	return int64((nftLevel * defaultPoints) + rewards)
 }
+
+func (d *TagsRecordDao) GetYesterdayTagsRecords() ([]model.TagsRecords, error) {
+	now := time.Now()
+
+	// 计算昨天的日期（不考虑时分秒）
+	yesterday := now.AddDate(0, 0, -1)
+
+	// 设置昨天的开始时间（00:00:00）
+	yesterdayStart := time.Date(yesterday.Year(), yesterday.Month(), yesterday.Day(), 0, 0, 0, 0, now.Location())
+
+	// 设置昨天的结束时间（23:59:59.999999999）
+	yesterdayEnd := yesterdayStart.AddDate(0, 0, 1).Add(-time.Nanosecond)
+
+	var records []model.TagsRecords
+	err := d.db.Where("created_at >= ? AND created_at < ?", yesterdayStart, yesterdayEnd).Find(&records).Error
+	return records, err
+}

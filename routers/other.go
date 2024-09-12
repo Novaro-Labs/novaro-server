@@ -85,8 +85,21 @@ func AddOtherRoutes(r *gin.RouterGroup) {
 	{
 		nftApi := api.NewNftInfoApi()
 		nft.GET("/info", nftApi.GetNftInfo)
-		nft.POST("/update", nftApi.Updates)
+		nft.POST("/updatePoints", nftApi.UpdatePoints)
 	}
 
+	r.Group("/api/postPoints")
+	{
+		//pointsApi := api.NewPostPointsApi()
+		cron.AddJob("@every 30s", func() {
+			//pointsApi.SyncData()
+		})
+	}
+
+	pointsHistory := r.Group("/api/pointsHistory")
+	{
+		historyApi := api.NewPointsHistoryApi()
+		pointsHistory.POST("/list", historyApi.GetList)
+	}
 	cron.Start()
 }

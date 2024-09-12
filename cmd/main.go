@@ -38,4 +38,6 @@ func initDB() {
 	db.AutoMigrate(&model.TwitterUserInfo{})
 	db.AutoMigrate(&model.Users{})
 	db.AutoMigrate(&model.PostPoints{})
+	db.AutoMigrate(&model.NftLevel{})
+	db.AutoMigrate(&model.PointsChangeLog{})
 }

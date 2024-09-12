@@ -8,11 +8,17 @@ import (
 )
 
 type PointsHistory struct {
-	Id       string    `json:"id"`
-	Wallet   *string   `json:"wallet"`
-	Points   float64   `json:"points"`
-	Status   int       `json:"status"`
-	CreateAt time.Time `json:"createAt"`
+	Id       string     `json:"id,omitempty"`
+	Wallet   *string    `json:"wallet,omitempty"`
+	Points   float64    `json:"points,omitempty"`
+	Status   int        `json:"status,omitempty"`
+	CreateAt *time.Time `json:"createAt,omitempty"`
+}
+
+type PointsHistoryQuery struct {
+	Wallet string `json:"wallet"  binding:"required"`
+	Page   int    `json:"page"  binding:"required"`
+	Size   int    `json:"size"  binding:"required"`
 }
 
 func (PointsHistory) TableName() string {
