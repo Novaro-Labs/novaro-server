@@ -9,6 +9,7 @@ import (
 type TagsRecordsApi struct {
 	TagId   string                     `json:"tagId"`
 	PostId  string                     `json:"postId"`
+	UserId  string                     `json:"userId"`
 	service *service.TagsRecordService `json:"-"`
 }
 
@@ -31,13 +32,24 @@ func NewTagsRecordApi() *TagsRecordsApi {
 func (api *TagsRecordsApi) AddTagsRecords(c *gin.Context) {
 	var tagsRecords model.TagsRecords
 	if err := c.ShouldBindJSON(&tagsRecords); err != nil {
-		c.JSON(400, gin.H{"error": err.Error()})
+		c.JSON(400, gin.H{
+			"code": 400,
+			"msg":  err.Error(),
+		})
 		return
 	}
 
 	if err := api.service.Create(&tagsRecords); err != nil {
-		c.JSON(400, gin.H{"error": err.Error()})
+		c.JSON(400, gin.H{
+			"code": 400,
+			"msg":  err.Error(),
+		})
 		return
 	}
 	c.JSON(200, gin.H{"message": "Successfully added tags records"})
+}
+
+func (api *TagsRecordsApi) SyncData() {
+	api.service.SyncData()
+	api.service.CleanExpiredTags()
 }

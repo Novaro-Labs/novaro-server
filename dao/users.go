@@ -34,3 +34,11 @@ func (d *UsersDao) UserExists(userId string) (bool, error) {
 	err := d.db.Model(&model.Users{}).Where("id = ?", userId).Count(&count).Error
 	return count > 0, err
 }
+
+func (d *UsersDao) GetById(id string) (*model.Users, error) {
+	var user model.Users
+	tx := d.db.Model(&model.Users{}).Preload("NftInfo").
+		Joins("left join nft_info on nft_info.wallet = users.wallet_public_key").
+		Where("users.id = ?", id).First(&user)
+	return &user, tx.Error
+}

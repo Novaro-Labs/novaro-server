@@ -1,4 +1,4 @@
-package router
+package routers
 
 import (
 	"github.com/gin-gonic/gin"
@@ -13,12 +13,6 @@ func AddOtherRoutes(r *gin.RouterGroup) {
 	collections := r.Group("/api/collections")
 	{
 		collectionsApi := api.NewCollectionsApi()
-
-		// 定时器
-		cron.AddJob("@every 5m", func() {
-			collectionsApi.Sync()
-		})
-
 		collections.POST("/add", collectionsApi.Create)
 	}
 
@@ -26,33 +20,26 @@ func AddOtherRoutes(r *gin.RouterGroup) {
 	{
 		commentsApi := api.NewCommentApi()
 
+		cron.AddJob("@every 30s", func() {
+			//commentsApi.SyncCommentsToDB()
+		})
+
 		comments.GET("/getCommentsListByPostId", commentsApi.GetCommentsListByPostId)
 		comments.GET("/getCommentsListByParentId", commentsApi.GetCommentsListByParentId)
 		comments.GET("/getCommentsListByUserId", commentsApi.GetCommentsListByUserId)
-		comments.POST("/add", commentsApi.AddComments)
+		comments.PUT("/add", commentsApi.AddComments)
 		comments.DELETE("/delete", commentsApi.DeleteById)
 	}
 
 	posts := r.Group("/api/posts")
 	{
 		postsApi := api.NewPostsApi()
-
-		cron.AddJob("@every 3s", func() {
-			postsApi.SyncData()
-		})
-
-		posts.GET("/getPostsById", postsApi.GetPostsById)
-		posts.GET("/getPostsByUserId", postsApi.GetPostsByUserId)
-		posts.POST("/getPostsList", postsApi.GetPostsList)
-		posts.POST("/savePosts", postsApi.SavePosts)
-		posts.POST("/saveRePosts", postsApi.SavePosts)
-		posts.DELETE("/delPostsById", postsApi.DelPostsById)
-	}
-
-	reposts := r.Group("/api/reposts")
-	{
-		postsApi := api.NewRePostApi()
-		reposts.POST("/add", postsApi.AddRePosts)
+		//posts.GET("/getPostsById", postsApi.GetPostsById)
+		//posts.GET("/getPostsByUserId", postsApi.GetPostsByUserId)
+		posts.POST("/list", postsApi.GetPostsList)
+		posts.PUT("/save", postsApi.SavePosts)
+		posts.PUT("/resave", postsApi.SavePosts)
+		posts.DELETE("/delete", postsApi.DelPostsById)
 	}
 
 	tags := r.Group("/api/tags")
@@ -65,6 +52,10 @@ func AddOtherRoutes(r *gin.RouterGroup) {
 	{
 
 		recordsApi := api.NewTagsRecordApi()
+		cron.AddJob("@every 30s", func() {
+			//recordsApi.SyncData()
+		})
+
 		records.POST("/add", recordsApi.AddTagsRecords)
 	}
 	invitationCodes := r.Group("/api/invitation/codes")
@@ -88,6 +79,13 @@ func AddOtherRoutes(r *gin.RouterGroup) {
 		events.DELETE("/delete", eventsApi.DeleteEvents)
 		events.PUT("/update", eventsApi.UpdateEvents)
 		events.POST("/list", eventsApi.GetList)
+	}
+
+	nft := r.Group("/api/nft")
+	{
+		nftApi := api.NewNftInfoApi()
+		nft.GET("/info", nftApi.GetNftInfo)
+		nft.POST("/update", nftApi.Updates)
 	}
 
 	cron.Start()

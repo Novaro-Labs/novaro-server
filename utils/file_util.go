@@ -56,7 +56,7 @@ func handleFile(file multipart.File, fileHeader *multipart.FileHeader, sourceId 
 	curDate := fmt.Sprintf("%d%02d%02d", now.Year(), now.Month(), now.Day())
 
 	// 生成路径
-	uploadDir := config.UploadPath + "/" + curDate
+	uploadDir := config.Get().Client.UploadPath + "/" + curDate
 
 	// 确保上传目录存在
 	if err := os.MkdirAll(uploadDir, os.ModePerm); err != nil {

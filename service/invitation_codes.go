@@ -15,16 +15,18 @@ type InvitationCodesService struct {
 
 func NewInvitationCodesService() *InvitationCodesService {
 	return &InvitationCodesService{
-		dao: dao.NewInvitationCodesDao(config.DB),
+		dao: dao.NewInvitationCodesDao(model.GetDB()),
 	}
 }
 
 func (s *InvitationCodesService) MakeInvitationCodes(userId string) (*string, *time.Time, error) {
 
+	client := config.Get().Client
+
 	var code string
 	var err error
 	for {
-		code, err = s.MakeInvitationCode(config.InvitatioCodeLength)
+		code, err = s.MakeInvitationCode(client.InvitationCodeLength)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -43,7 +45,7 @@ func (s *InvitationCodesService) MakeInvitationCodes(userId string) (*string, *t
 		UserId:    userId,
 		Code:      code,
 		CreatedAt: time.Now(),
-		ExpiresAt: time.Now().Add(config.InvitatioCodeExpiration),
+		ExpiresAt: time.Now().Add(client.InvitationCodeExpireDay),
 	}
 	err = s.dao.MakeInvitationCodes(data)
 

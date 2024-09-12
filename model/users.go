@@ -21,6 +21,7 @@ type Users struct {
 	CreditScore     float64   `json:"creditScore"`
 	CreatedAt       time.Time `json:"createdAt"`
 	LastLogin       time.Time `json:"lastLogin"`
+	NftInfo         *NftInfo  `json:"nftInfo" gorm:"foreignKey:Wallet;references:WalletPublicKey"`
 }
 
 func (Users) TableName() string {

@@ -8,10 +8,28 @@ import (
 )
 
 type TagsRecords struct {
-	Id        string    `json:"id"`
-	TagId     string    `json:"tagId"`
-	PostId    string    `json:"postId"`
-	CreatedAt time.Time `json:"createdAt"`
+	Id         string    `json:"id"`
+	TagId      string    `json:"tagId"`
+	PostId     string    `json:"postId"`
+	UserId     string    `json:"userId"`
+	Points     float64   `json:"points"`
+	PostPoints float64   `json:"postPoints"`
+	CreatedAt  time.Time `json:"createdAt"`
+}
+
+type TagRecordQueue struct {
+	TagId      string    `json:"tagId"`
+	PostId     string    `json:"postId"`
+	UserId     string    `json:"userId"`
+	Points     float64   `json:"points"`
+	PostPoints float64   `json:"postPoints"`
+	CreatedAt  time.Time `json:"createdAt"`
+	Operation  string    `json:"operation"`
+}
+
+type TagRecordResponse struct {
+	Id    string `json:"id"`
+	Count int    `json:"count"`
 }
 
 func (u *TagsRecords) BeforeCreate(tx *gorm.DB) error {

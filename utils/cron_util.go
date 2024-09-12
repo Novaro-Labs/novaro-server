@@ -1,6 +1,10 @@
 package utils
 
-import "github.com/robfig/cron/v3"
+import (
+	"context"
+	"github.com/robfig/cron/v3"
+	"novaro-server/model"
+)
 
 type CronManager struct {
 	cron *cron.Cron
@@ -18,7 +22,11 @@ func (cm *CronManager) AddJob(spec string, job func()) error {
 }
 
 func (cm *CronManager) Start() {
-	cm.cron.Start()
+	cli := model.GetRedisCli()
+	_, err := cli.Ping(context.Background()).Result()
+	if err == nil {
+		cm.cron.Start()
+	}
 }
 
 func (cm *CronManager) Stop() {

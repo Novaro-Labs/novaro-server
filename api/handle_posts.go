@@ -23,53 +23,6 @@ func NewPostsApi() *PostsApi {
 	}
 }
 
-// GetPostsById godoc
-// @Summary Get a post by ID
-// @Description Retrieves a post from the database based on the provided ID
-// @Tags posts
-// @Accept json
-// @Produce json
-// @Param id query string true "PostID"
-// @Success 200 {object} model.Posts
-// @Failure 400
-// @Router /v1/api/posts/getPostsById [get]
-func (api *PostsApi) GetPostsById(c *gin.Context) {
-	value := c.Query("id")
-
-	resp, err := api.service.GetById(value)
-	if err != nil {
-		c.JSON(400, gin.H{"error": err.Error()})
-		return
-	}
-	c.JSON(200, gin.H{
-		"code": 200,
-		"data": resp,
-	})
-}
-
-// GetPostsByUserId godoc
-// @Summary Get posts by user ID
-// @Description Retrieves all posts from the database for a specific user
-// @Tags posts
-// @Accept json
-// @Produce json
-// @Param userId query string true "UserID"
-// @Success 200 {array} model.Posts
-// @Failure 400
-// @Router /v1/api/posts/getPostsByUserId [get]
-func (api *PostsApi) GetPostsByUserId(c *gin.Context) {
-	id := c.Query("userId")
-	resp, err := api.service.GetByUserId(id)
-	if err != nil {
-		c.JSON(400, gin.H{"error": err.Error()})
-		return
-	}
-	c.JSON(200, gin.H{
-		"code": 200,
-		"data": resp,
-	})
-}
-
 // GetPostsList godoc
 // @Summary Get a list of posts
 // @Description Retrieves a list of posts based on the provided query parameters
@@ -83,13 +36,19 @@ func (api *PostsApi) GetPostsByUserId(c *gin.Context) {
 func (api *PostsApi) GetPostsList(c *gin.Context) {
 	var postsQuery model.PostsQuery
 	if err := c.ShouldBind(&postsQuery); err != nil {
-		c.JSON(400, gin.H{"error": err.Error()})
+		c.JSON(400, gin.H{
+			"code": 400,
+			"msg":  err.Error(),
+		})
 		return
 	}
 
 	resp, err := api.service.GetList(&postsQuery)
 	if err != nil {
-		c.JSON(400, gin.H{"error": err.Error()})
+		c.JSON(400, gin.H{
+			"code": 400,
+			"msg":  err.Error(),
+		})
 		return
 	}
 	c.JSON(200, gin.H{
@@ -112,17 +71,23 @@ func (api *PostsApi) SavePosts(c *gin.Context) {
 	var posts model.Posts
 
 	if err := c.ShouldBindJSON(&posts); err != nil {
-		c.JSON(400, gin.H{"error": err.Error()})
+		c.JSON(400, gin.H{
+			"code": 400,
+			"msg":  err.Error(),
+		})
 		return
 	}
 
 	if err := api.service.Save(&posts); err != nil {
-		c.JSON(400, gin.H{"error": err.Error()})
+		c.JSON(400, gin.H{
+			"code": 400,
+			"msg":  err.Error(),
+		})
 		return
 	}
 	c.JSON(200, gin.H{
 		"code": 200,
-		"data": posts,
+		"msg":  "success",
 	})
 }
 
@@ -140,17 +105,31 @@ func (api *PostsApi) SaveReposts(c *gin.Context) {
 	var posts model.Posts
 
 	if err := c.ShouldBindJSON(&posts); err != nil {
-		c.JSON(400, gin.H{"error": err.Error()})
+		c.JSON(400, gin.H{
+			"code": 400,
+			"msg":  err.Error(),
+		})
+		return
+	}
+
+	if posts.OriginalId == "" {
+		c.JSON(400, gin.H{
+			"code": 400,
+			"msg":  "OriginalId is required",
+		})
 		return
 	}
 
 	if err := api.service.Save(&posts); err != nil {
-		c.JSON(400, gin.H{"error": err.Error()})
+		c.JSON(400, gin.H{
+			"code": 400,
+			"msg":  err.Error(),
+		})
 		return
 	}
 	c.JSON(200, gin.H{
 		"code": 200,
-		"data": posts,
+		"msg":  "success",
 	})
 }
 
@@ -172,12 +151,14 @@ func (api *PostsApi) DelPostsById(c *gin.Context) {
 	}
 
 	if err := api.service.Delete(id); err != nil {
-		c.JSON(400, gin.H{"error": err.Error()})
+		c.JSON(400, gin.H{
+			"code": 400,
+			"msg":  err.Error(),
+		})
 		return
 	}
-	c.JSON(200, gin.H{"msg": "success"})
-}
-
-func (api *PostsApi) SyncData() {
-	api.service.SyncCountToDataBase()
+	c.JSON(200, gin.H{
+		"code": 200,
+		"msg":  "success",
+	})
 }
