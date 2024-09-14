@@ -3,6 +3,7 @@ package dao
 import (
 	"gorm.io/gorm"
 	"novaro-server/model"
+	"time"
 )
 
 type PointsHistoryDao struct {
@@ -20,6 +21,11 @@ func (d *PointsHistoryDao) GetList(p *model.PointsHistoryQuery) ([]model.PointsH
 	err := d.db.Model(&model.PointsHistory{}).Select("id,points").Limit(p.Size).
 		Offset((p.Page-1)*p.Size).Where("wallet = ? and status = '0'", p.Wallet).Find(&points).Error
 	return points, err
+}
+
+func (d *PointsHistoryDao) Statistics(wallet string, datetime time.Time) {
+	d.db.Model(&model.PointsHistory{}).Select("sum(points) as points").Where("wallet = ? and status = '0' and create_at > ?", wallet, datetime).
+		Scan(&model.PointsHistory{})
 }
 
 func (d *PointsHistoryDao) Create(tx *gorm.DB, history *model.PointsHistory) error {

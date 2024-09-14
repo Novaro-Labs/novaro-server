@@ -1,6 +1,7 @@
 package service
 
 import (
+	"github.com/redis/go-redis/v9"
 	"gorm.io/gorm"
 	"novaro-server/dao"
 	"novaro-server/model"
@@ -11,6 +12,7 @@ type NftInfoService struct {
 	dao                *dao.NftInfoDao
 	pointsHistoryDao   *dao.PointsHistoryDao
 	pointsChangeLogDao *dao.PointsChangeLogDao
+	rdb                *redis.Client
 }
 
 func NewNftInfoService() *NftInfoService {
@@ -19,6 +21,7 @@ func NewNftInfoService() *NftInfoService {
 		dao:                dao.NewNftInfoDao(db),
 		pointsHistoryDao:   dao.NewPointsHistoryDao(db),
 		pointsChangeLogDao: dao.NewPointsChangeLogDao(db),
+		rdb:                model.GetRedisCli(),
 	}
 }
 
@@ -34,7 +37,10 @@ func (s *NftInfoService) GetByWallet(wallet string) (model.NftInfo, error) {
 	return s.dao.GetByWallet(wallet)
 }
 
-func (s *NftInfoService) UpdatePoints(info *model.NftInfoRequest) (points float64, err error) {
+func (s *NftInfoService) UpdatePoints(info *model.NftInfoRequest) (map[string]any, error) {
+	maps := make(map[string]any, 2)
+	var err error
+	var points float64
 
 	err = model.GetDB().Transaction(func(tx *gorm.DB) error {
 		points, err = s.dao.UpdatePoints(tx, info)
@@ -54,11 +60,25 @@ func (s *NftInfoService) UpdatePoints(info *model.NftInfoRequest) (points float6
 			Reason:       "",
 			CreatedAt:    time.Now(),
 		})
+
 		if err != nil {
 			return err
 		}
 
 		return nil
 	})
-	return points, err
+
+	maps["totalPoints"] = points
+	yesterdayPoints, err := s.pointsChangeLogDao.GetYesterdayPoints(info.Wallet)
+	if err != nil {
+		yesterdayPoints = 0
+	}
+	maps["currentPoints"] = yesterdayPoints
+	return maps, err
 }
+
+//func (s *NftInfoService) CheckUpgrade(wallet string, points float64) (bool, error) {
+//	//s.rdb.ZScore()
+//
+
+//}

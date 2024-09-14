@@ -17,9 +17,9 @@ type PointsChangeLog struct {
 }
 
 type PointsChangeLogRequest struct {
-	Wallet string `json:"wallet"`
-	Page   int    `json:"page"`
-	Size   int    `json:"size"`
+	Wallet string `json:"wallet" binding:"required"`
+	Page   int    `json:"page" binding:"required"`
+	Size   int    `json:"size" binding:"required"`
 }
 
 func (PointsChangeLog) TableName() string {

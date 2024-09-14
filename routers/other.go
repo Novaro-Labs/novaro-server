@@ -101,5 +101,11 @@ func AddOtherRoutes(r *gin.RouterGroup) {
 		historyApi := api.NewPointsHistoryApi()
 		pointsHistory.POST("/list", historyApi.GetList)
 	}
+
+	pointsChangeLog := r.Group("/api/pointsChangeLog")
+	{
+		changeLogApi := api.NewPointsChangeLogApi()
+		pointsChangeLog.POST("/list", changeLogApi.GetList)
+	}
 	cron.Start()
 }
