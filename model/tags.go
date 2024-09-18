@@ -8,11 +8,10 @@ import (
 )
 
 type Tags struct {
-	Id        string    `json:"id"`
-	TagType   string    `json:"tagType"`
-	TagColor  string    `json:"tagColor"`
-	CreatedAt time.Time `json:"createdAt"`
-	Posts     []Posts   `json:"posts" gorm:"-"`
+	Id        string     `json:"id"`
+	SourceId  string     `json:"sourceId"`
+	CreatedAt *time.Time `json:"createdAt,omitempty"`
+	Posts     []Posts    `json:"posts,omitempty" gorm:"-"`
 }
 
 func (u *Tags) BeforeCreate(tx *gorm.DB) error {

@@ -47,6 +47,59 @@ func (api *PostsApi) GetPostsList(c *gin.Context) {
 	})
 }
 
+func (api *PostsApi) GetLikeByUser(c *gin.Context) {
+	value := c.Query("userId")
+	if value == "" {
+		c.JSON(400, gin.H{
+			"code": 400,
+			"msg":  "userId is required",
+		})
+		return
+	}
+
+	user, err := api.service.GetLikeByUser(value)
+	if err != nil {
+		c.JSON(500, gin.H{
+			"code": 500,
+			"msg":  err.Error(),
+		})
+		return
+	}
+
+	c.JSON(200, gin.H{
+		"code": 200,
+		"data": user,
+		"msg":  "sussess",
+	})
+}
+
+func (api *PostsApi) GetPostById(c *gin.Context) {
+	value := c.Query("postId")
+	if value == "" {
+		c.JSON(400, gin.H{
+			"code": 400,
+			"msg":  "postId is required",
+		})
+		return
+	}
+
+	res, err := api.service.GetById(value)
+
+	if err != nil {
+		c.JSON(500, gin.H{
+			"code": 500,
+			"msg":  err.Error(),
+		})
+		return
+	}
+
+	c.JSON(200, gin.H{
+		"code": 200,
+		"data": res,
+		"msg":  "sussess",
+	})
+}
+
 func (api *PostsApi) SavePosts(c *gin.Context) {
 	var posts model.Posts
 

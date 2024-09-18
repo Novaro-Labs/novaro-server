@@ -14,7 +14,7 @@ func (userInfo *TwitterUserInfo) ToUsers() *Users {
 	users := &Users{
 		TwitterId: userInfo.Id,
 		UserName:  userInfo.Username,
-		CreatedAt: userInfo.Created,
+		CreatedAt: &userInfo.Created,
 		Avatar:    &userInfo.Avatar,
 	}
 	return users

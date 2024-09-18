@@ -24,16 +24,6 @@ func NewTagsRecordDao(db *gorm.DB) *TagsRecordDao {
 	}
 }
 
-func (d *TagsRecordDao) AddTagsRecords(t *model.TagsRecords) error {
-	err := d.db.Create(&t).Error
-	return err
-}
-
-func (d *TagsRecordDao) Delete(t *model.TagsRecords) error {
-	err := d.db.Where("user_id = ? and post_id = ? and tag_id = ?", t.UserId, t.PostId, t.TagId).Delete(&t).Error
-	return err
-}
-
 func (d *TagsRecordDao) GetRecord(tagId, postId, userId string) int64 {
 	var count int64
 	d.db.Where("tag_id = ? and post_id = ? and user_id = ?", tagId, postId, userId).Count(&count)
@@ -118,15 +108,6 @@ func (d *TagsRecordDao) GetTagsRecordsByPostId(post *model.Posts) ([]model.TagRe
 
 	return result, total, nil
 }
-func (d *TagsRecordDao) Points(wattle *string, nftLevel int) int64 {
-	if wattle == nil {
-		return 0
-	}
-	defaultPoints := 5
-	rewards := nftLevel
-
-	return int64((nftLevel * defaultPoints) + rewards)
-}
 
 func (d *TagsRecordDao) GetYesterdayTagsRecords() ([]model.TagsRecords, error) {
 	now := time.Now()
@@ -143,4 +124,24 @@ func (d *TagsRecordDao) GetYesterdayTagsRecords() ([]model.TagsRecords, error) {
 	var records []model.TagsRecords
 	err := d.db.Where("created_at >= ? AND created_at < ?", yesterdayStart, yesterdayEnd).Find(&records).Error
 	return records, err
+}
+
+func (d *TagsRecordDao) Points(wattle *string, nftLevel int) int64 {
+	if wattle == nil {
+		return 0
+	}
+	defaultPoints := 5
+	rewards := nftLevel
+
+	return int64((nftLevel * defaultPoints) + rewards)
+}
+
+func (d *TagsRecordDao) AddTagsRecords(t *model.TagsRecords) error {
+	err := d.db.Create(&t).Error
+	return err
+}
+
+func (d *TagsRecordDao) Delete(t *model.TagsRecords) error {
+	err := d.db.Where("user_id = ? and post_id = ? and tag_id = ?", t.UserId, t.PostId, t.TagId).Delete(&t).Error
+	return err
 }

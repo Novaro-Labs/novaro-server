@@ -13,6 +13,7 @@ import (
 type CommentsService struct {
 	dao     *dao.CommentsDao
 	postDao *dao.PostsDao
+	userDao *dao.UsersDao
 }
 
 func NewCommentService() *CommentsService {
@@ -20,12 +21,19 @@ func NewCommentService() *CommentsService {
 	return &CommentsService{
 		dao:     dao.NewCommentsDao(db),
 		postDao: dao.NewPostsDao(db),
+		userDao: dao.NewUsersDao(db),
 	}
 }
 
-func (s *CommentsService) Create(c *model.Comments) (int64, error) {
-	count, err := s.dao.Create(c)
-	return count, err
+func (s *CommentsService) Create(c *model.Comments) (*model.Comments, int64, error) {
+	item, count, err := s.dao.Create(c)
+	user, err := s.userDao.GetById(item.UserId)
+	item.User = &model.Users{
+		Id:       user.Id,
+		UserName: user.UserName,
+	}
+
+	return item, count, err
 }
 
 func (s *CommentsService) GetById(id string) (*model.Comments, error) {
@@ -62,10 +70,8 @@ func (s *CommentsService) Delete(id, postId string) (int64, error) {
 func (s *CommentsService) SyncCommentsToDB() {
 	result, client := s.dao.SyncCommentsToDB()
 
-	// 使用 WaitGroup 来等待所有协程完成
 	var wg sync.WaitGroup
-	// 使用 channel 来限制并发数量
-	semaphore := make(chan struct{}, 10) // 限制最多10个并发协程
+	semaphore := make(chan struct{}, 10)
 
 	for _, key := range result {
 		wg.Add(1)

@@ -8,20 +8,20 @@ import (
 )
 
 type Users struct {
-	Id              string    `json:"id" `
-	TwitterId       string    `json:"twitterID"`
-	UserName        string    `json:"userName"`
-	Avatar          *string   `json:"avatar"`
-	Followers       uint      `json:"followers"`
-	Following       uint      `json:"following"`
-	WalletPublicKey *string   `json:"walletPublicKey"`
-	InvitationCode  *string   `json:"invitationCode"`
-	UserLevel       int       `json:"userLevel"`
-	UserScore       float64   `json:"userScore"`
-	CreditScore     float64   `json:"creditScore"`
-	CreatedAt       time.Time `json:"createdAt"`
-	LastLogin       time.Time `json:"lastLogin"`
-	NftInfo         *NftInfo  `json:"nftInfo" gorm:"foreignKey:Wallet;references:WalletPublicKey"`
+	Id              string     `json:"id"`
+	TwitterId       string     `json:"twitterID,omitempty"`
+	UserName        string     `json:"userName,omitempty"`
+	Avatar          *string    `json:"avatar,omitempty"`
+	Followers       uint       `json:"followers,omitempty"`
+	Following       uint       `json:"following,omitempty"`
+	WalletPublicKey *string    `json:"walletPublicKey,omitempty"`
+	InvitationCode  *string    `json:"invitationCode,omitempty"`
+	UserLevel       int        `json:"userLevel,omitempty"`
+	UserScore       float64    `json:"userScore,omitempty"`
+	CreditScore     float64    `json:"creditScore,omitempty"`
+	CreatedAt       *time.Time `json:"createdAt,omitempty"`
+	LastLogin       *time.Time `json:"lastLogin,omitempty"`
+	NftInfo         *NftInfo   `json:"nftInfo,omitempty" gorm:"foreignKey:Wallet;references:WalletPublicKey"`
 }
 
 func (Users) TableName() string {

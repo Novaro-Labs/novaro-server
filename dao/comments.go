@@ -22,7 +22,7 @@ func NewCommentsDao(db *gorm.DB) *CommentsDao {
 	}
 }
 
-func (d *CommentsDao) Create(c *model.Comments) (int64, error) {
+func (d *CommentsDao) Create(c *model.Comments) (*model.Comments, int64, error) {
 	err := d.db.Create(&c).Error
 
 	var count int64
@@ -30,7 +30,7 @@ func (d *CommentsDao) Create(c *model.Comments) (int64, error) {
 		key := fmt.Sprintf("post:%s:comment_count", c.PostId)
 		count, err = d.rdb.Incr(context.Background(), key).Result()
 	}
-	return count, err
+	return c, count, err
 }
 
 func (d *CommentsDao) GetById(id string) (resp *model.Comments, err error) {
@@ -45,13 +45,15 @@ func (d *CommentsDao) GetCount(postId string) int64 {
 }
 
 func (d *CommentsDao) GetListByPostId(postId string) (resp []model.Comments, err error) {
-	err = d.db.Table("comments").Where("post_id = ?", postId).Find(&resp).Error
+	err = d.db.Table("comments").Preload("User", func(db *gorm.DB) *gorm.DB {
+		return db.Select("id,user_name,wallet_public_key")
+	}).Where("post_id = ?", postId).Find(&resp).Error
 	return resp, nil
 }
 
 func (d *CommentsDao) GetListByParentId(parentId string) (resp []model.Comments, err error) {
 
-	err = d.db.Table("comments").Where("parent_id = ?", parentId).Find(&resp).Error
+	err = d.db.Table("comments").Preload("User").Where("parent_id = ?", parentId).Find(&resp).Error
 	if err != nil {
 		return resp, err
 	}

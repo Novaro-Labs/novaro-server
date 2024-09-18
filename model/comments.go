@@ -14,7 +14,8 @@ type Comments struct {
 	ParentId  string     `json:"parentId"`
 	Content   string     `json:"content"`
 	CreatedAt time.Time  `json:"createdAt"`
-	Children  []Comments `json:"children" gorm:"-"`
+	User      *Users     `json:"user" gorm:"foreignKey:id;references:UserId;"`
+	Children  []Comments `json:"children,omitempty" gorm:"-"`
 }
 
 func (Comments) TableName() string {

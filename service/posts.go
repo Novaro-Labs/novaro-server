@@ -37,25 +37,31 @@ func NewPostService() *PostService {
 	}
 }
 
+func (s *PostService) GetLikeByUser(userId string) ([]model.Posts, error) {
+
+	return s.dao.GetLikeByUser(userId)
+}
+
 func (s *PostService) GetList(p *model.PostsQuery) (resp []model.Posts, err error) {
 	resp, err = s.dao.GetPostsList(p)
 
 	var wg sync.WaitGroup
-	// 使用缓冲通道作为信号量来限制并发 goroutine 的数量
-	semaphore := make(chan struct{}, 10) // 最多10个并发 goroutine
+	semaphore := make(chan struct{}, 100)
 
 	for i := range resp {
 		wg.Add(1)
 		go func(i int) {
 			defer wg.Done()
 
-			semaphore <- struct{}{}        // 获取信号量
-			defer func() { <-semaphore }() // 释放信号量
+			semaphore <- struct{}{}
+			defer func() { <-semaphore }()
 
 			// 获取标签
 			tags, total, _ := s.tagRecordDao.GetTagsRecordsByPostId(&resp[i])
-			resp[i].Tags = tags
+			resp[i].TagResp = tags
 			resp[i].TagsAmount = total
+			list, _ := s.tagsDao.GetTagsList()
+			resp[i].Tags = list
 
 			count, _ := s.commentsDao.GetCommentCount(resp[i].Id)
 			resp[i].CommentsAmount = count
@@ -78,10 +84,12 @@ func (s *PostService) GetList(p *model.PostsQuery) (resp []model.Posts, err erro
 
 func (s *PostService) GetById(id string) (*model.Posts, error) {
 	resp, err := s.dao.GetPostsById(id)
-	tags, total, err := s.tagRecordDao.GetTagsRecordsByPostId(resp)
-	resp.Tags = tags
+	tags, total, err := s.tagRecordDao.GetTagsRecordsByPostId(&resp)
+	resp.TagResp = tags
 	resp.TagsAmount = total
-	return resp, err
+	list, _ := s.tagsDao.GetTagsList()
+	resp.Tags = list
+	return &resp, err
 }
 
 func (s *PostService) PostExists(id string) (bool, error) {
@@ -97,7 +105,7 @@ func (s *PostService) GetByUserId(userId string) ([]model.Posts, error) {
 		if err != nil {
 			resp[i].Tags = nil
 		}
-		resp[i].Tags = tags
+		resp[i].TagResp = tags
 		resp[i].TagsAmount = total
 	}
 	return resp, err

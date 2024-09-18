@@ -20,8 +20,9 @@ type Posts struct {
 	ViewAmount        int                 `json:"viewAmount"`
 	SourceId          string              `json:"sourceId"`
 	User              *Users              `json:"user" gorm:"foreignKey:id;references:UserId"`
-	Tags              []TagRecordResponse `json:"tags" gorm:"-"`
+	TagResp           []TagRecordResponse `json:"tagResp" gorm:"-"`
 	Imgs              []Imgs              `json:"Imgs" gorm:"-"`
+	Tags              []Tags              `json:"tags" gorm:"-"`
 }
 
 func (Posts) TableName() string {

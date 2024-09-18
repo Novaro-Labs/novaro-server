@@ -58,8 +58,9 @@ func (s *TagsRecordService) Create(records *model.TagsRecords) error {
 	if exists {
 		err1 = s.removeRecords(records)
 	} else {
-		err1 = s.addRecords(records, post, user)
+		err1 = s.addRecords(records, &post, user)
 	}
+
 	return err1
 }
 
