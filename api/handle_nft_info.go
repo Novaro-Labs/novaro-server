@@ -33,8 +33,8 @@ func (api *NftInfoApi) GetNftInfo(c *gin.Context) {
 			"code": 400,
 			"msg":  err.Error(),
 		})
+		return
 	}
-
 	c.JSON(200, gin.H{
 		"code": 200,
 		"data": wallet,
@@ -42,8 +42,8 @@ func (api *NftInfoApi) GetNftInfo(c *gin.Context) {
 	})
 }
 
-func (api *NftInfoApi) Updates(c *gin.Context) {
-	var nftInfo model.NftInfo
+func (api *NftInfoApi) UpdatePoints(c *gin.Context) {
+	var nftInfo model.NftInfoRequest
 	err := c.ShouldBindJSON(&nftInfo)
 	if err != nil {
 		c.JSON(400, gin.H{
@@ -53,7 +53,7 @@ func (api *NftInfoApi) Updates(c *gin.Context) {
 		return
 	}
 
-	updates, err := api.service.Updates(&nftInfo)
+	updates, err := api.service.UpdatePoints(&nftInfo)
 	if err != nil {
 		c.JSON(400, gin.H{
 			"code": 400,

@@ -22,7 +22,10 @@ func NewPostsDao(db *gorm.DB) *PostsDao {
 }
 
 func (d *PostsDao) GetPostsList(p *model.PostsQuery) (resp []model.Posts, err error) {
-	query := d.db.Table("posts").Limit(p.Size).Offset(p.Page * p.Size)
+	query := d.db.Table("posts").Preload("User", func(db *gorm.DB) *gorm.DB {
+		return db.Select("id, user_name, wallet_public_key")
+	}).Limit(p.Size).Offset((p.Page - 1) * p.Size)
+
 	if p.Id != "" {
 		query = query.Where("id = ?", p.Id)
 	}
@@ -31,9 +34,20 @@ func (d *PostsDao) GetPostsList(p *model.PostsQuery) (resp []model.Posts, err er
 	return resp, err
 }
 
-func (d *PostsDao) GetPostsById(id string) (resp *model.Posts, err error) {
-	err = d.db.Table("posts").Where("id = ?", id).Find(&resp).Error
+func (d *PostsDao) GetPostsById(id string) (resp model.Posts, err error) {
+	err = d.db.Table("posts").Preload("User").Where("id = ?", id).First(&resp).Error
 	return resp, err
+}
+
+func (d *PostsDao) GetPostsByUserId(userId string) (resp []model.Posts, err error) {
+	err = d.db.Model(&model.Posts{}).Where("user_id = ?", userId).Find(&resp).Error
+	return resp, nil
+}
+
+func (d *PostsDao) GetPostIdByUser(postId string) *model.Posts {
+	var post model.Posts
+	d.db.Model(model.Posts{}).Preload("User").Where("id = ?", postId).First(&post)
+	return &post
 }
 
 func (d *PostsDao) PostExists(id string) (bool, error) {
@@ -42,10 +56,16 @@ func (d *PostsDao) PostExists(id string) (bool, error) {
 	return count > 0, err
 }
 
-func (d *PostsDao) GetPostsByUserId(userId string) (resp []model.Posts, err error) {
-	err = d.db.Model(&model.Posts{}).Where("user_id = ?", userId).Find(&resp).Error
-	return resp, nil
+func (d *PostsDao) GetLikeByUser(userId string) ([]model.Posts, error) {
+
+	var posts []model.Posts
+	err := d.db.Table("posts").Joins("RIGHT JOIN tags_records ON tags_records.post_id = posts.id").
+		Where("tags_records.user_id = ?", userId).
+		Group("tags_records.post_id").
+		Find(&posts).Error
+	return posts, err
 }
+
 func (d *PostsDao) GetCountByUserId(userId string) (count int64, err error) {
 
 	// 获取当前日期的开始和结束时间
@@ -59,7 +79,6 @@ func (d *PostsDao) GetCountByUserId(userId string) (count int64, err error) {
 
 	return count, tx.Error
 }
-
 func (d *PostsDao) Save(tx *gorm.DB, posts *model.Posts) error {
 	var data = model.Posts{
 		Id:         posts.Id,
@@ -123,7 +142,6 @@ func (d *PostsDao) Delete(tx *gorm.DB, id string) error {
 	}
 	return err2
 }
-
 func (d *PostsDao) CalculateCommission(userId string) (int64, error) {
 	ctx := context.Background()
 	key := fmt.Sprintf("user:%s:posts:count", userId)
@@ -159,7 +177,6 @@ func (d *PostsDao) calculatePoints(value int64) int64 {
 		return 0
 	}
 }
-
 func (d *PostsDao) DeleteCache(userId string) error {
 	ctx := context.Background()
 	key := fmt.Sprintf("user:%s:posts:count", userId)

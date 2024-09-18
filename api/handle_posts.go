@@ -23,16 +23,6 @@ func NewPostsApi() *PostsApi {
 	}
 }
 
-// GetPostsList godoc
-// @Summary Get a list of posts
-// @Description Retrieves a list of posts based on the provided query parameters
-// @Tags posts
-// @Accept json
-// @Produce json
-// @Param query body model.PostsQuery false "Query parameters"
-// @Success 200 {array} model.Posts
-// @Failure 400
-// @Router /v1/api/posts/getPostsList [post]
 func (api *PostsApi) GetPostsList(c *gin.Context) {
 	var postsQuery model.PostsQuery
 	if err := c.ShouldBind(&postsQuery); err != nil {
@@ -57,16 +47,59 @@ func (api *PostsApi) GetPostsList(c *gin.Context) {
 	})
 }
 
-// SavePosts godoc
-// @Summary Save a new post
-// @Description Creates a new post in the database
-// @Tags posts
-// @Accept json
-// @Produce json
-// @Param post body PostsApi true "Post object"
-// @Success 200 {object} model.Posts
-// @Failure 400
-// @Router /v1/api/posts/savePosts [post]
+func (api *PostsApi) GetLikeByUser(c *gin.Context) {
+	value := c.Query("userId")
+	if value == "" {
+		c.JSON(400, gin.H{
+			"code": 400,
+			"msg":  "userId is required",
+		})
+		return
+	}
+
+	user, err := api.service.GetLikeByUser(value)
+	if err != nil {
+		c.JSON(500, gin.H{
+			"code": 500,
+			"msg":  err.Error(),
+		})
+		return
+	}
+
+	c.JSON(200, gin.H{
+		"code": 200,
+		"data": user,
+		"msg":  "sussess",
+	})
+}
+
+func (api *PostsApi) GetPostById(c *gin.Context) {
+	value := c.Query("postId")
+	if value == "" {
+		c.JSON(400, gin.H{
+			"code": 400,
+			"msg":  "postId is required",
+		})
+		return
+	}
+
+	res, err := api.service.GetById(value)
+
+	if err != nil {
+		c.JSON(500, gin.H{
+			"code": 500,
+			"msg":  err.Error(),
+		})
+		return
+	}
+
+	c.JSON(200, gin.H{
+		"code": 200,
+		"data": res,
+		"msg":  "sussess",
+	})
+}
+
 func (api *PostsApi) SavePosts(c *gin.Context) {
 	var posts model.Posts
 
@@ -91,16 +124,6 @@ func (api *PostsApi) SavePosts(c *gin.Context) {
 	})
 }
 
-// SavePosts godoc
-// @Summary Save a new repost
-// @Description Creates a new repost in the database
-// @Tags posts
-// @Accept json
-// @Produce json
-// @Param post body RePosts true "Post object"
-// @Success 200 {object} model.Posts
-// @Failure 400
-// @Router /v1/api/posts/saveRePosts [post]
 func (api *PostsApi) SaveReposts(c *gin.Context) {
 	var posts model.Posts
 
@@ -133,16 +156,6 @@ func (api *PostsApi) SaveReposts(c *gin.Context) {
 	})
 }
 
-// DelPostsById godoc
-// @Summary Delete a post by ID
-// @Description Deletes a post from the database based on the provided ID
-// @Tags posts
-// @Accept json
-// @Produce json
-// @Param id query string true "Post ID"
-// @Success 200
-// @Failure 400
-// @Router /v1/api/posts/delPostsById [delete]
 func (api *PostsApi) DelPostsById(c *gin.Context) {
 	id := c.Query("id")
 	if id == "" {

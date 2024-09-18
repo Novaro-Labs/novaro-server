@@ -21,7 +21,7 @@ func AddOtherRoutes(r *gin.RouterGroup) {
 		commentsApi := api.NewCommentApi()
 
 		cron.AddJob("@every 30s", func() {
-			//commentsApi.SyncCommentsToDB()
+			commentsApi.SyncCommentsToDB()
 		})
 
 		comments.GET("/getCommentsListByPostId", commentsApi.GetCommentsListByPostId)
@@ -34,12 +34,12 @@ func AddOtherRoutes(r *gin.RouterGroup) {
 	posts := r.Group("/api/posts")
 	{
 		postsApi := api.NewPostsApi()
-		//posts.GET("/getPostsById", postsApi.GetPostsById)
-		//posts.GET("/getPostsByUserId", postsApi.GetPostsByUserId)
 		posts.POST("/list", postsApi.GetPostsList)
 		posts.PUT("/save", postsApi.SavePosts)
 		posts.PUT("/resave", postsApi.SavePosts)
 		posts.DELETE("/delete", postsApi.DelPostsById)
+		posts.GET("/like", postsApi.GetLikeByUser)
+		posts.GET("/get", postsApi.GetPostById)
 	}
 
 	tags := r.Group("/api/tags")
@@ -53,10 +53,10 @@ func AddOtherRoutes(r *gin.RouterGroup) {
 
 		recordsApi := api.NewTagsRecordApi()
 		cron.AddJob("@every 30s", func() {
-			//recordsApi.SyncData()
+			recordsApi.SyncData()
 		})
 
-		records.POST("/add", recordsApi.AddTagsRecords)
+		records.PUT("/add", recordsApi.AddTagsRecords)
 	}
 	invitationCodes := r.Group("/api/invitation/codes")
 	{
@@ -85,8 +85,27 @@ func AddOtherRoutes(r *gin.RouterGroup) {
 	{
 		nftApi := api.NewNftInfoApi()
 		nft.GET("/info", nftApi.GetNftInfo)
-		nft.POST("/update", nftApi.Updates)
+		nft.POST("/updatePoints", nftApi.UpdatePoints)
 	}
 
+	r.Group("/api/postPoints")
+	{
+		pointsApi := api.NewPostPointsApi()
+		cron.AddJob("@every 30s", func() {
+			pointsApi.SyncData()
+		})
+	}
+
+	pointsHistory := r.Group("/api/pointsHistory")
+	{
+		historyApi := api.NewPointsHistoryApi()
+		pointsHistory.POST("/list", historyApi.GetList)
+	}
+
+	pointsChangeLog := r.Group("/api/pointsChangeLog")
+	{
+		changeLogApi := api.NewPointsChangeLogApi()
+		pointsChangeLog.POST("/list", changeLogApi.GetList)
+	}
 	cron.Start()
 }

@@ -26,10 +26,10 @@ const (
 )
 
 func AddAuthRoutes(rg *gin.RouterGroup) {
-	group := rg.Group("/auth")
+	auth := rg.Group("/auth")
 
-	group.GET("/login", login)
-	group.GET("/callback", callback)
+	auth.GET("/login", login)
+	auth.GET("/callback", callback)
 }
 
 func login(c *gin.Context) {

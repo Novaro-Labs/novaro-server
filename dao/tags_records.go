@@ -24,16 +24,6 @@ func NewTagsRecordDao(db *gorm.DB) *TagsRecordDao {
 	}
 }
 
-func (d *TagsRecordDao) AddTagsRecords(t *model.TagsRecords) error {
-	err := d.db.Create(&t).Error
-	return err
-}
-
-func (d *TagsRecordDao) Delete(t *model.TagsRecords) error {
-	err := d.db.Where("user_id = ? and post_id = ? and tag_id = ?", t.UserId, t.PostId, t.TagId).Delete(&t).Error
-	return err
-}
-
 func (d *TagsRecordDao) GetRecord(tagId, postId, userId string) int64 {
 	var count int64
 	d.db.Where("tag_id = ? and post_id = ? and user_id = ?", tagId, postId, userId).Count(&count)
@@ -118,6 +108,24 @@ func (d *TagsRecordDao) GetTagsRecordsByPostId(post *model.Posts) ([]model.TagRe
 
 	return result, total, nil
 }
+
+func (d *TagsRecordDao) GetYesterdayTagsRecords() ([]model.TagsRecords, error) {
+	now := time.Now()
+
+	// 计算昨天的日期（不考虑时分秒）
+	yesterday := now.AddDate(0, 0, -1)
+
+	// 设置昨天的开始时间（00:00:00）
+	yesterdayStart := time.Date(yesterday.Year(), yesterday.Month(), yesterday.Day(), 0, 0, 0, 0, now.Location())
+
+	// 设置昨天的结束时间（23:59:59.999999999）
+	yesterdayEnd := yesterdayStart.AddDate(0, 0, 1).Add(-time.Nanosecond)
+
+	var records []model.TagsRecords
+	err := d.db.Where("created_at >= ? AND created_at < ?", yesterdayStart, yesterdayEnd).Find(&records).Error
+	return records, err
+}
+
 func (d *TagsRecordDao) Points(wattle *string, nftLevel int) int64 {
 	if wattle == nil {
 		return 0
@@ -126,4 +134,14 @@ func (d *TagsRecordDao) Points(wattle *string, nftLevel int) int64 {
 	rewards := nftLevel
 
 	return int64((nftLevel * defaultPoints) + rewards)
+}
+
+func (d *TagsRecordDao) AddTagsRecords(t *model.TagsRecords) error {
+	err := d.db.Create(&t).Error
+	return err
+}
+
+func (d *TagsRecordDao) Delete(t *model.TagsRecords) error {
+	err := d.db.Where("user_id = ? and post_id = ? and tag_id = ?", t.UserId, t.PostId, t.TagId).Delete(&t).Error
+	return err
 }

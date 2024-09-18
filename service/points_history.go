@@ -19,3 +19,7 @@ func NewPointsHistoryService() *PointsHistoryService {
 func (s *PointsHistoryService) Create(tx *gorm.DB, history *model.PointsHistory) error {
 	return s.dao.Create(tx, history)
 }
+
+func (s *PointsHistoryService) GetList(p *model.PointsHistoryQuery) ([]model.PointsHistory, error) {
+	return s.dao.GetList(p)
+}

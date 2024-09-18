@@ -112,7 +112,7 @@ func (api *CommentsApi) AddComments(c *gin.Context) {
 		})
 		return
 	}
-	count, err := api.service.Create(&comments)
+	comment, count, err := api.service.Create(&comments)
 	if err != nil {
 		c.JSON(400, gin.H{
 			"code": 400,
@@ -122,9 +122,10 @@ func (api *CommentsApi) AddComments(c *gin.Context) {
 	}
 
 	c.JSON(200, gin.H{
-		"code": 200,
-		"data": count,
-		"msg":  "success",
+		"code":  200,
+		"data":  comment,
+		"total": count,
+		"msg":   "success",
 	})
 }
 
