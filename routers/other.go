@@ -27,7 +27,7 @@ func AddOtherRoutes(r *gin.RouterGroup) {
 		comments.GET("/getCommentsListByPostId", commentsApi.GetCommentsListByPostId)
 		comments.GET("/getCommentsListByParentId", commentsApi.GetCommentsListByParentId)
 		comments.GET("/getCommentsListByUserId", commentsApi.GetCommentsListByUserId)
-		comments.PUT("/add", commentsApi.AddComments)
+		comments.POST("/add", commentsApi.AddComments)
 		comments.DELETE("/delete", commentsApi.DeleteById)
 	}
 
@@ -35,8 +35,8 @@ func AddOtherRoutes(r *gin.RouterGroup) {
 	{
 		postsApi := api.NewPostsApi()
 		posts.POST("/list", postsApi.GetPostsList)
-		posts.PUT("/save", postsApi.SavePosts)
-		posts.PUT("/resave", postsApi.SavePosts)
+		posts.POST("/save", postsApi.SavePosts)
+		posts.POST("/resave", postsApi.SavePosts)
 		posts.DELETE("/delete", postsApi.DelPostsById)
 		posts.GET("/like", postsApi.GetLikeByUser)
 		posts.GET("/get", postsApi.GetPostById)
@@ -66,9 +66,8 @@ func AddOtherRoutes(r *gin.RouterGroup) {
 
 	files := r.Group("/upload")
 	{
-		files.POST("/files", func(context *gin.Context) {
-			utils.UploadFiles(context.Writer, context.Request)
-		})
+		uploadApi := api.NewUploadApi()
+		files.POST("/files", uploadApi.UploadFile)
 
 	}
 
@@ -85,7 +84,7 @@ func AddOtherRoutes(r *gin.RouterGroup) {
 	{
 		nftApi := api.NewNftInfoApi()
 		nft.GET("/info", nftApi.GetNftInfo)
-		nft.POST("/updatePoints", nftApi.UpdatePoints)
+		nft.PUT("/updatePoints", nftApi.UpdatePoints)
 	}
 
 	r.Group("/api/postPoints")
@@ -106,6 +105,13 @@ func AddOtherRoutes(r *gin.RouterGroup) {
 	{
 		changeLogApi := api.NewPointsChangeLogApi()
 		pointsChangeLog.POST("/list", changeLogApi.GetList)
+	}
+
+	tokens := r.Group("/api/tokens")
+	{
+		tokensApi := api.NewNftTokensApi()
+		tokens.GET("/getTokensByWallet", tokensApi.GetTokensByWallet)
+		tokens.POST("/save", tokensApi.SaveNftToken)
 	}
 	cron.Start()
 }

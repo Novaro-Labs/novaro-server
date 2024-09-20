@@ -40,4 +40,5 @@ func initDB() {
 	db.AutoMigrate(&model.PostPoints{})
 	db.AutoMigrate(&model.NftLevel{})
 	db.AutoMigrate(&model.PointsChangeLog{})
+	db.AutoMigrate(&model.NftTokens{})
 }
