@@ -3,7 +3,6 @@ package dao
 import (
 	"gorm.io/gorm"
 	"novaro-server/model"
-	"time"
 )
 
 type InvitationCodesDao struct {
@@ -30,8 +29,8 @@ func (d *InvitationCodesDao) CheckInvitationCodes(code string) (bool, error) {
 	if tx.RowsAffected == 0 {
 		return false, nil
 	}
-	if invitationCodes.ExpiresAt.Before(time.Now()) {
-		return false, nil
-	}
+	//if invitationCodes.ExpiresAt.Before(time.Now()) {
+	//	return false, nil
+	//}
 	return true, nil
 }

@@ -18,8 +18,7 @@ func NewPointsHistoryDao(db *gorm.DB) *PointsHistoryDao {
 
 func (d *PointsHistoryDao) GetList(p *model.PointsHistoryQuery) ([]model.PointsHistory, error) {
 	var points []model.PointsHistory
-	err := d.db.Model(&model.PointsHistory{}).Select("id,points").Limit(p.Size).
-		Offset((p.Page-1)*p.Size).Where("wallet = ? and status = '0'", p.Wallet).Find(&points).Error
+	err := d.db.Model(&model.PointsHistory{}).Select("id,points").Where("wallet = ? and status = '0'", p.Wallet).Find(&points).Error
 	return points, err
 }
 

@@ -23,11 +23,12 @@ func (d *ImgsDao) GetImgsBySourceId(sourceId string) ([]model.Imgs, error) {
 	return imgs, tx.Error
 }
 
-func (d *ImgsDao) UploadFile(path string, sourceId string) error {
-	tx := d.db.Create(&model.Imgs{
+func (d *ImgsDao) UploadFile(path string, sourceId string) (*model.Imgs, error) {
+	imgs := model.Imgs{
 		Path:     path,
 		SourceId: sourceId,
 		Id:       strings.ReplaceAll(uuid.New().String(), "-", ""),
-	})
-	return tx.Error
+	}
+	tx := d.db.Create(&imgs)
+	return &imgs, tx.Error
 }

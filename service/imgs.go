@@ -19,6 +19,6 @@ func (s *ImgsService) GetBySourceId(sourceId string) ([]model.Imgs, error) {
 	return s.dao.GetImgsBySourceId(sourceId)
 }
 
-func (s *ImgsService) UploadFile(path string, sourceId string) error {
+func (s *ImgsService) UploadFile(path string, sourceId string) (*model.Imgs, error) {
 	return s.dao.UploadFile(path, sourceId)
 }
