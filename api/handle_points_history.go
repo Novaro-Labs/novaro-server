@@ -41,3 +41,29 @@ func (api *PointsHistoryApi) GetList(c *gin.Context) {
 		"msg":  "success",
 	})
 }
+
+func (api *PointsHistoryApi) Statistics(c *gin.Context) {
+	value := c.Query("wallet")
+	if value == "" {
+		c.JSON(400, gin.H{
+			"code": 400,
+			"msg":  "wallet is required",
+		})
+		return
+	}
+
+	statistics, err := api.service.Statistics(value, nil)
+	if err != nil {
+		c.JSON(500, gin.H{
+			"code": 500,
+			"msg":  "server error",
+		})
+		return
+	}
+
+	c.JSON(200, gin.H{
+		"code": 200,
+		"data": statistics,
+		"msg":  "success",
+	})
+}

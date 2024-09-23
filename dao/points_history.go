@@ -22,9 +22,28 @@ func (d *PointsHistoryDao) GetList(p *model.PointsHistoryQuery) ([]model.PointsH
 	return points, err
 }
 
-func (d *PointsHistoryDao) Statistics(wallet string, datetime time.Time) {
-	d.db.Model(&model.PointsHistory{}).Select("sum(points) as points").Where("wallet = ? and status = '0' and create_at > ?", wallet, datetime).
-		Scan(&model.PointsHistory{})
+func (d *PointsHistoryDao) Statistics(wallet string, datetime *time.Time) ([]model.PointsHistory, error) {
+	var results []model.PointsHistory
+
+	// 如果 datetime 为 nil，使用当前时间
+	endDate := time.Now()
+	if datetime != nil {
+		endDate = *datetime
+	}
+
+	startDate := endDate.AddDate(0, 0, -7)
+
+	startDate = time.Date(startDate.Year(), startDate.Month(), startDate.Day(), 0, 0, 0, 0, startDate.Location())
+	endDate = time.Date(endDate.Year(), endDate.Month(), endDate.Day(), 0, 0, 0, 0, endDate.Location()).Add(-time.Nanosecond)
+
+	err := d.db.Model(&model.PointsHistory{}).
+		Select("DATE(create_at) as date, SUM(points) as points").
+		Where("wallet = ? AND create_at >= ? AND create_at < ?", wallet, startDate, endDate).
+		Group("DATE(create_at)").
+		Order("date ASC").
+		Scan(&results).Error
+
+	return results, err
 }
 
 func (d *PointsHistoryDao) Create(tx *gorm.DB, history *model.PointsHistory) error {

@@ -99,6 +99,7 @@ func AddOtherRoutes(r *gin.RouterGroup) {
 	{
 		historyApi := api.NewPointsHistoryApi()
 		pointsHistory.POST("/list", historyApi.GetList)
+		pointsHistory.GET("/statistics", historyApi.Statistics)
 	}
 
 	pointsChangeLog := r.Group("/api/pointsChangeLog")
