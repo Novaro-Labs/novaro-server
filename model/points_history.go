@@ -21,6 +21,11 @@ type PointsHistoryQuery struct {
 	Size   int    `json:"size"  binding:"required"`
 }
 
+type PointsHistoryStatistics struct {
+	Date   string  `json:"date"`
+	Points float64 `json:"points"`
+}
+
 func (PointsHistory) TableName() string {
 	return "points_history"
 }
