@@ -68,6 +68,7 @@ func AddOtherRoutes(r *gin.RouterGroup) {
 	{
 		uploadApi := api.NewUploadApi()
 		files.POST("/files", uploadApi.UploadFile)
+		files.GET("/novaro", uploadApi.LoadSql)
 
 	}
 
@@ -98,7 +99,7 @@ func AddOtherRoutes(r *gin.RouterGroup) {
 	pointsHistory := r.Group("/api/pointsHistory")
 	{
 		historyApi := api.NewPointsHistoryApi()
-		pointsHistory.POST("/list", historyApi.GetList)
+		pointsHistory.GET("/list", historyApi.GetList)
 		pointsHistory.GET("/statistics", historyApi.Statistics)
 	}
 
@@ -114,5 +115,6 @@ func AddOtherRoutes(r *gin.RouterGroup) {
 		tokens.GET("/getTokensByWallet", tokensApi.GetTokensByWallet)
 		tokens.POST("/save", tokensApi.SaveNftToken)
 	}
+
 	cron.Start()
 }

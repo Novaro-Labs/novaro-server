@@ -43,19 +43,20 @@ func (s *NftInfoService) UpdatePoints(info *model.NftInfoRequest) (map[string]an
 	var points float64
 
 	err = model.GetDB().Transaction(func(tx *gorm.DB) error {
-		points, err = s.dao.UpdatePoints(tx, info)
-		if err != nil {
-			return err
+		point, err2 := s.pointsHistoryDao.UpdateStatus(tx, info.PointId)
+		if err2 != nil {
+			return err2
 		}
+		info.Points = point
 
-		err = s.pointsHistoryDao.UpdateStatus(tx, info.PointId)
+		points, err = s.dao.UpdatePoints(tx, info)
 		if err != nil {
 			return err
 		}
 
 		err = s.pointsChangeLogDao.Create(tx, &model.PointsChangeLog{
 			Wallet:       info.Wallet,
-			ChangeAmount: info.Points,
+			ChangeAmount: point,
 			ChangeType:   0,
 			Reason:       "",
 			CreatedAt:    time.Now(),
