@@ -48,8 +48,16 @@ func (api *PostsApi) GetPostsList(c *gin.Context) {
 }
 
 func (api *PostsApi) GetLikeByUser(c *gin.Context) {
-	value := c.Query("userId")
-	if value == "" {
+	var postsQuery model.PostsQuery
+	if err := c.ShouldBind(&postsQuery); err != nil {
+		c.JSON(400, gin.H{
+			"code": 400,
+			"msg":  err.Error(),
+		})
+		return
+	}
+
+	if postsQuery.UserId == "" {
 		c.JSON(400, gin.H{
 			"code": 400,
 			"msg":  "userId is required",
@@ -57,7 +65,7 @@ func (api *PostsApi) GetLikeByUser(c *gin.Context) {
 		return
 	}
 
-	user, err := api.service.GetLikeByUser(value)
+	user, err := api.service.GetList(&postsQuery)
 	if err != nil {
 		c.JSON(500, gin.H{
 			"code": 500,

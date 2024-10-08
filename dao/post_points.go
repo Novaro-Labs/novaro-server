@@ -60,6 +60,8 @@ func (d *PostPointsDao) GetYesterdayPostHistory() ([]model.PostPoints, error) {
 	yesterdayEnd := yesterdayStart.AddDate(0, 0, 1).Add(-time.Nanosecond)
 
 	var records []model.PostPoints
-	err := d.db.Where("created_at >= ? AND created_at <= ?", yesterdayStart, yesterdayEnd).Find(&records).Error
+	err := d.db.Select("id,post_id,sum(points) as points").Where("created_at >= ? AND created_at <= ?", yesterdayStart, yesterdayEnd).
+		Group("post_id").
+		Find(&records).Error
 	return records, err
 }

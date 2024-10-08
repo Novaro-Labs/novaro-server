@@ -57,11 +57,11 @@ func (s *PostService) GetList(p *model.PostsQuery) (resp []model.Posts, err erro
 			defer func() { <-semaphore }()
 
 			// 获取标签
-			tags, total, _ := s.tagRecordDao.GetTagsRecordsByPostId(&resp[i])
-			resp[i].TagResp = tags
-			resp[i].TagsAmount = total
-			list, _ := s.tagsDao.GetTagsList()
-			resp[i].Tags = list
+			//tags, total, _ := s.tagRecordDao.GetTagsRecordsByPostId(&resp[i])
+			//resp[i].TagResp = tags
+			//resp[i].TagsAmount = total
+			//list, _ := s.tagsDao.GetTagsList()
+			//resp[i].Tags = list
 
 			count, _ := s.commentsDao.GetCommentCount(resp[i].Id)
 			resp[i].CommentsAmount = count
@@ -82,14 +82,18 @@ func (s *PostService) GetList(p *model.PostsQuery) (resp []model.Posts, err erro
 	return resp, err
 }
 
-func (s *PostService) GetById(id string) (*model.Posts, error) {
-	resp, err := s.dao.GetPostsById(id)
-	tags, total, err := s.tagRecordDao.GetTagsRecordsByPostId(&resp)
-	resp.TagResp = tags
-	resp.TagsAmount = total
-	list, _ := s.tagsDao.GetTagsList()
-	resp.Tags = list
-	return &resp, err
+func (s *PostService) GetById(id string) (model.Posts, error) {
+	resp, err := s.GetList(&model.PostsQuery{
+		Id:   id,
+		Page: 1,
+		Size: 10,
+	})
+	//tags, total, err := s.tagRecordDao.GetTagsRecordsByPostId(&resp)
+	//resp.TagResp = tags
+	//resp.TagsAmount = total
+	//list, _ := s.tagsDao.GetTagsList()
+	//resp.Tags = list
+	return resp[0], err
 }
 
 func (s *PostService) PostExists(id string) (bool, error) {
@@ -100,14 +104,14 @@ func (s *PostService) GetByUserId(userId string) ([]model.Posts, error) {
 	resp, err := s.dao.GetPostsByUserId(userId)
 
 	// 处理标签
-	for i := range resp {
-		tags, total, err := s.tagRecordDao.GetTagsRecordsByPostId(&resp[i])
-		if err != nil {
-			resp[i].Tags = nil
-		}
-		resp[i].TagResp = tags
-		resp[i].TagsAmount = total
-	}
+	//for i := range resp {
+	//	tags, total, err := s.tagRecordDao.GetTagsRecordsByPostId(&resp[i])
+	//	if err != nil {
+	//		resp[i].Tags = nil
+	//	}
+	//	resp[i].TagResp = tags
+	//	resp[i].TagsAmount = total
+	//}
 	return resp, err
 }
 

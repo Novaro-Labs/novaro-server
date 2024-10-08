@@ -30,6 +30,10 @@ func (d *PostsDao) GetPostsList(p *model.PostsQuery) (resp []model.Posts, err er
 		query = query.Where("id = ?", p.Id)
 	}
 
+	if p.UserId != "" {
+		query = query.Where("user_id = ?", p.UserId)
+	}
+
 	err = query.Order("created_at desc").Find(&resp).Error
 	return resp, err
 }
@@ -104,7 +108,7 @@ func (d *PostsDao) Update(posts *model.Posts) error {
 	return tx.Error
 }
 func (d *PostsDao) UpdateCount(id string, count int64) error {
-	err := d.db.Model(&model.Posts{}).Where("id = ?", id).Update("comments_amount", count).Error
+	err := d.db.Model(&model.Posts{}).Where("id = ?", id).UpdateColumn("comments_amount", count).Error
 	return err
 }
 func (d *PostsDao) UpdateRePostCount(id string) error {
@@ -121,7 +125,7 @@ func (d *PostsDao) UpdateBatch(posts []model.Posts) error {
 				CommentsAmount:    post.CommentsAmount,
 				CollectionsAmount: post.CollectionsAmount,
 				RepostsAmount:     post.RepostsAmount,
-				Tags:              post.Tags,
+				//Tags:              post.Tags,
 			}).Error; err != nil {
 				return err
 			}

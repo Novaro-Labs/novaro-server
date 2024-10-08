@@ -21,7 +21,7 @@ func AddOtherRoutes(r *gin.RouterGroup) {
 		commentsApi := api.NewCommentApi()
 
 		cron.AddJob("@every 30s", func() {
-			commentsApi.SyncCommentsToDB()
+			//commentsApi.SyncCommentsToDB()
 		})
 
 		comments.GET("/getCommentsListByPostId", commentsApi.GetCommentsListByPostId)
@@ -38,7 +38,8 @@ func AddOtherRoutes(r *gin.RouterGroup) {
 		posts.POST("/save", postsApi.SavePosts)
 		posts.POST("/resave", postsApi.SavePosts)
 		posts.DELETE("/delete", postsApi.DelPostsById)
-		posts.GET("/like", postsApi.GetLikeByUser)
+		posts.POST("/listByUser", postsApi.GetLikeByUser)
+		posts.POST("/likes")
 		posts.GET("/get", postsApi.GetPostById)
 	}
 
@@ -53,7 +54,7 @@ func AddOtherRoutes(r *gin.RouterGroup) {
 
 		recordsApi := api.NewTagsRecordApi()
 		cron.AddJob("@every 30s", func() {
-			recordsApi.SyncData()
+			//recordsApi.SyncData()
 		})
 
 		records.PUT("/add", recordsApi.AddTagsRecords)
