@@ -15,12 +15,28 @@ func NewLikeDao(db *gorm.DB) *LikeDao {
 	}
 }
 
-func (d *LikeDao) Add(like *model.Likes) error {
+func (d *LikeDao) Add(like *model.Likes) (*model.Likes, error) {
 	err := d.dao.Create(&like).Error
-	return err
+	return like, err
 }
 
-func (d *LikeDao) Delete(like *model.Likes) error {
-	err := d.dao.Model(&model.Likes{}).Where("id = ?", like.Id).Delete(&like).Error
-	return err
+func (d *LikeDao) BatchAdd(postId string, userIds []string) error {
+	for _, userId := range userIds {
+		d.dao.Create(&model.Likes{
+			UserId: userId,
+			PostId: postId,
+		})
+	}
+	return nil
+}
+
+func (d *LikeDao) Delete(id string) bool {
+	err := d.dao.Where("id=?", id).Delete(&model.Likes{}).Error
+	return err == nil
+}
+
+func (d *LikeDao) IsLikedByUser(postId string, userId string) string {
+	var like model.Likes
+	d.dao.Where("post_id = ? AND user_id = ?", postId, userId).First(&like)
+	return like.Id
 }

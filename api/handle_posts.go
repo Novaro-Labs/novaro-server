@@ -47,6 +47,40 @@ func (api *PostsApi) GetPostsList(c *gin.Context) {
 	})
 }
 
+func (api *PostsApi) GetListByUser(c *gin.Context) {
+	var postsQuery model.PostsQuery
+	if err := c.ShouldBind(&postsQuery); err != nil {
+		c.JSON(400, gin.H{
+			"code": 400,
+			"msg":  err.Error(),
+		})
+		return
+	}
+
+	if postsQuery.UserId == "" {
+		c.JSON(400, gin.H{
+			"code": 400,
+			"msg":  "userId is required",
+		})
+		return
+	}
+
+	user, err := api.service.GetListByUser(&postsQuery)
+	if err != nil {
+		c.JSON(500, gin.H{
+			"code": 500,
+			"msg":  err.Error(),
+		})
+		return
+	}
+
+	c.JSON(200, gin.H{
+		"code": 200,
+		"data": user,
+		"msg":  "sussess",
+	})
+}
+
 func (api *PostsApi) GetLikeByUser(c *gin.Context) {
 	var postsQuery model.PostsQuery
 	if err := c.ShouldBind(&postsQuery); err != nil {
@@ -65,7 +99,41 @@ func (api *PostsApi) GetLikeByUser(c *gin.Context) {
 		return
 	}
 
-	user, err := api.service.GetList(&postsQuery)
+	user, err := api.service.GetLikeByUser(&postsQuery)
+	if err != nil {
+		c.JSON(500, gin.H{
+			"code": 500,
+			"msg":  err.Error(),
+		})
+		return
+	}
+
+	c.JSON(200, gin.H{
+		"code": 200,
+		"data": user,
+		"msg":  "sussess",
+	})
+}
+
+func (api *PostsApi) GetCommentByUser(c *gin.Context) {
+	var postsQuery model.PostsQuery
+	if err := c.ShouldBind(&postsQuery); err != nil {
+		c.JSON(400, gin.H{
+			"code": 400,
+			"msg":  err.Error(),
+		})
+		return
+	}
+
+	if postsQuery.UserId == "" {
+		c.JSON(400, gin.H{
+			"code": 400,
+			"msg":  "userId is required",
+		})
+		return
+	}
+
+	user, err := api.service.GetCommnetByUser(&postsQuery)
 	if err != nil {
 		c.JSON(500, gin.H{
 			"code": 500,

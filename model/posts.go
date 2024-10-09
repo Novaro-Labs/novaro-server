@@ -8,21 +8,20 @@ import (
 )
 
 type Posts struct {
-	Id                string    `json:"id"`
-	UserId            string    `json:"userId"`
-	Content           string    `json:"content"`
-	CommentsAmount    int64     `json:"commentsAmount"`
-	CollectionsAmount int       `json:"collectionsAmount"`
-	RepostsAmount     int       `json:"repostsAmount"`
-	TagsAmount        int       `json:"tagsAmount"`
-	CreatedAt         time.Time `json:"createdAt"`
-	OriginalId        string    `json:"originalId"`
-	ViewAmount        int       `json:"viewAmount"`
-	SourceId          string    `json:"sourceId"`
-	User              *Users    `json:"user" gorm:"foreignKey:id;references:UserId"`
-	//TagResp           []TagRecordResponse `json:"tagResp" gorm:"-"`
-	Imgs []Imgs `json:"Imgs" gorm:"-"`
-	//Tags              []Tags              `json:"tags" gorm:"-"`
+	Id             string    `json:"id"`
+	UserId         string    `json:"userId"`
+	Content        string    `json:"content"`
+	CommentsAmount int64     `json:"commentsAmount"`
+	RepostsAmount  int       `json:"repostsAmount"`
+	LikesAmount    int       `json:"likesAmount"`
+	CreatedAt      time.Time `json:"createdAt"`
+	OriginalId     string    `json:"originalId"`
+	ViewAmount     int       `json:"viewAmount"`
+	SourceId       string    `json:"sourceId"`
+	User           *Users    `json:"user" gorm:"foreignKey:id;references:UserId"`
+	Imgs           []Imgs    `json:"Imgs" gorm:"-"`
+	Comments       *Comments `json:"comments" gorm:"foreignKey:PostId"`
+	IsLike         bool      `json:"isLike" gorm:"-"`
 }
 
 func (Posts) TableName() string {
