@@ -30,6 +30,10 @@ func (d *PostsDao) GetPostsList(p *model.PostsQuery) (resp []model.Posts, err er
 		query = query.Where("id = ?", p.Id)
 	}
 
+	if p.UserId != "" {
+		query = query.Where("user_id = ?", p.UserId)
+	}
+
 	err = query.Order("created_at desc").Find(&resp).Error
 	return resp, err
 }
@@ -37,11 +41,6 @@ func (d *PostsDao) GetPostsList(p *model.PostsQuery) (resp []model.Posts, err er
 func (d *PostsDao) GetPostsById(id string) (resp model.Posts, err error) {
 	err = d.db.Table("posts").Preload("User").Where("id = ?", id).First(&resp).Error
 	return resp, err
-}
-
-func (d *PostsDao) GetPostsByUserId(userId string) (resp []model.Posts, err error) {
-	err = d.db.Model(&model.Posts{}).Where("user_id = ?", userId).Find(&resp).Error
-	return resp, nil
 }
 
 func (d *PostsDao) GetPostIdByUser(postId string) *model.Posts {
@@ -56,13 +55,77 @@ func (d *PostsDao) PostExists(id string) (bool, error) {
 	return count > 0, err
 }
 
-func (d *PostsDao) GetLikeByUser(userId string) ([]model.Posts, error) {
-
+func (d *PostsDao) GetLikeByUser(p *model.PostsQuery) ([]model.Posts, error) {
 	var posts []model.Posts
-	err := d.db.Table("posts").Joins("RIGHT JOIN tags_records ON tags_records.post_id = posts.id").
-		Where("tags_records.user_id = ?", userId).
-		Group("tags_records.post_id").
-		Find(&posts).Error
+	err := d.db.Table("posts").Select("posts.*").Joins("RIGHT JOIN likes on posts.id = likes.post_id").Where("likes.user_id = ?", p.UserId).
+		Limit(p.Size).Offset((p.Page - 1) * p.Size).Scan(&posts).Error
+	return posts, err
+}
+
+func (d *PostsDao) GetCommentByUser(p *model.PostsQuery) ([]model.Posts, error) {
+	var comments []model.Comments
+	var posts []model.Posts
+
+	err := d.db.Table("comments").Where("user_id = ?", p.UserId).Limit(p.Size).Offset((p.Page - 1) * p.Size).Group("post_id").
+		Order("created_at desc").Scan(&comments).Error
+
+	if err != nil {
+		return nil, err
+	}
+
+	if len(comments) == 0 {
+		return []model.Posts{}, nil
+	}
+
+	var postIds []string
+	commentMap := make(map[string]model.Comments)
+	for _, comment := range comments {
+		postIds = append(postIds, comment.PostId)
+		commentMap[comment.PostId] = comment
+	}
+
+	err = d.db.Table("posts").Where("id in (?)", postIds).Find(&posts).Error
+	if err != nil {
+		return nil, err
+	}
+
+	for i := range posts {
+		if comment, ok := commentMap[posts[i].Id]; ok {
+			posts[i].Comments = &comment
+		}
+	}
+
+	userIds := make([]string, 0)
+	for _, post := range posts {
+		userIds = append(userIds, post.UserId)
+		userIds = append(userIds, post.Comments.UserId)
+	}
+	userIds = removeDuplicates(userIds)
+
+	var users []model.Users
+	err = d.db.Table("users").
+		Where("id IN (?)", userIds).
+		Find(&users).Error
+
+	if err != nil {
+		return nil, err
+	}
+
+	userMap := make(map[string]model.Users)
+	for _, user := range users {
+		userMap[user.Id] = user
+	}
+
+	// 6. 关联用户信息
+	for i := range posts {
+		if user, ok := userMap[posts[i].UserId]; ok {
+			posts[i].User = &user
+		}
+		if user, ok := userMap[posts[i].Comments.UserId]; ok {
+			posts[i].Comments.User = &user
+		}
+	}
+
 	return posts, err
 }
 
@@ -104,24 +167,34 @@ func (d *PostsDao) Update(posts *model.Posts) error {
 	return tx.Error
 }
 func (d *PostsDao) UpdateCount(id string, count int64) error {
-	err := d.db.Model(&model.Posts{}).Where("id = ?", id).Update("comments_amount", count).Error
+	err := d.db.Model(&model.Posts{}).Where("id = ?", id).UpdateColumn("comments_amount", count).Error
 	return err
 }
 func (d *PostsDao) UpdateRePostCount(id string) error {
-	err := d.db.Model(&model.Posts{}).Where("id = ?", id).UpdateColumn("reposts_count", gorm.Expr("reposts_count + ?", 1)).Error
+	err := d.db.Model(&model.Posts{}).Where("id = ?", id).UpdateColumn("reposts_amount", gorm.Expr("reposts_amount + ?", 1)).Error
 	return err
 }
+
+func (d *PostsDao) UpdateLikeAmount(id string, amount int, types string) error {
+	var err error
+	if types == "add" {
+		err = d.db.Model(&model.Posts{}).Where("id = ?", id).UpdateColumn("likes_amount", gorm.Expr("likes_amount + ?", amount)).Error
+	} else {
+		err = d.db.Model(&model.Posts{}).Where("id = ?", id).UpdateColumn("likes_amount", gorm.Expr("likes_amount - ?", amount)).Error
+	}
+	return err
+}
+
 func (d *PostsDao) UpdateBatch(posts []model.Posts) error {
 	// 开始事务
 	err := d.db.Transaction(func(tx *gorm.DB) error {
 		for _, post := range posts {
 			// 更新每个 post
 			if err := tx.Model(&post).Updates(model.Posts{
-				Content:           post.Content,
-				CommentsAmount:    post.CommentsAmount,
-				CollectionsAmount: post.CollectionsAmount,
-				RepostsAmount:     post.RepostsAmount,
-				Tags:              post.Tags,
+				Content:        post.Content,
+				CommentsAmount: post.CommentsAmount,
+				RepostsAmount:  post.RepostsAmount,
+				//Tags:              post.Tags,
 			}).Error; err != nil {
 				return err
 			}
@@ -130,6 +203,7 @@ func (d *PostsDao) UpdateBatch(posts []model.Posts) error {
 	})
 	return err
 }
+
 func (d *PostsDao) Delete(tx *gorm.DB, id string) error {
 	if tx == nil {
 		tx = d.db
@@ -187,4 +261,15 @@ func (d *PostsDao) DeleteCache(userId string) error {
 	}
 	return nil
 
+}
+func removeDuplicates(strSlice []string) []string {
+	keys := make(map[string]bool)
+	list := []string{}
+	for _, entry := range strSlice {
+		if _, value := keys[entry]; !value {
+			keys[entry] = true
+			list = append(list, entry)
+		}
+	}
+	return list
 }

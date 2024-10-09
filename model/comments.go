@@ -8,11 +8,11 @@ import (
 )
 
 type Comments struct {
-	Id        string     `json:"id"`
-	UserId    string     `json:"userId"`
+	Id        string     `json:"id" gorm:"column:comment_id"`
+	UserId    string     `json:"userId" `
 	PostId    string     `json:"postId"`
-	ParentId  string     `json:"parentId"`
-	Content   string     `json:"content"`
+	ParentId  string     `json:"parentId" `
+	Content   string     `json:"content"  `
 	CreatedAt time.Time  `json:"createdAt"`
 	User      *Users     `json:"user" gorm:"foreignKey:id;references:UserId;"`
 	Children  []Comments `json:"children,omitempty" gorm:"-"`

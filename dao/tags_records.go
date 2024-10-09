@@ -122,7 +122,9 @@ func (d *TagsRecordDao) GetYesterdayTagsRecords() ([]model.TagsRecords, error) {
 	yesterdayEnd := yesterdayStart.AddDate(0, 0, 1).Add(-time.Nanosecond)
 
 	var records []model.TagsRecords
-	err := d.db.Where("created_at >= ? AND created_at < ?", yesterdayStart, yesterdayEnd).Find(&records).Error
+	err := d.db.Select("id,tag_id,post_id,user_id,sum(points) as points,sum(post_points) as post_points,created_at").Where("created_at >= ? AND created_at < ?", yesterdayStart, yesterdayEnd).
+		Group("post_id").
+		Find(&records).Error
 	return records, err
 }
 

@@ -83,7 +83,6 @@ func (s *PostPointsService) processRecords(records []model.TagsRecords) ([]model
 		go func(i int, item *model.TagsRecords) {
 			defer wg.Done()
 			user, err := s.userDao.GetById(item.UserId)
-			fmt.Println("::::", user.NftInfo.Wallet)
 			if err == nil && user.WalletPublicKey != nil {
 				mu.Lock()
 				userPoints = append(userPoints, model.PointsHistory{
@@ -111,7 +110,6 @@ func (s *PostPointsService) savePostPoints(postPoints []model.PostPoints) error 
 func (s *PostPointsService) processPostHistory() error {
 	histories, err := s.postPointsDao.GetYesterdayPostHistory()
 
-	fmt.Println("postPoints:::", histories)
 	if err != nil {
 		return fmt.Errorf("failed to get yesterday's post history: %w", err)
 	}
@@ -119,8 +117,8 @@ func (s *PostPointsService) processPostHistory() error {
 	var userPoints []model.PointsHistory
 
 	for _, history := range histories {
+
 		postUser := s.postDao.GetPostIdByUser(history.PostId)
-		fmt.Println(postUser)
 		if postUser.User.WalletPublicKey == nil {
 			continue
 		}

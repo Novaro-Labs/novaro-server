@@ -5,7 +5,10 @@ import (
 	"github.com/glebarez/sqlite"
 	"github.com/rabbitmq/amqp091-go"
 	"github.com/redis/go-redis/v9"
+	logger2 "gorm.io/gorm/logger"
+	"log"
 	"novaro-server/config"
+	"os"
 	"strings"
 	"sync"
 	"time"
@@ -160,10 +163,17 @@ func InitSqlite() {
 	//if config.Get().App.EnableTrace {
 	//	opts = append(opts, ggorm.WithEnableTrace())
 	//}
-
+	il := logger2.New(
+		log.New(os.Stdout, "\r\n", log.LstdFlags),
+		logger2.Config{
+			LogLevel: logger2.Info,
+			Colorful: true,
+		})
 	var err error
 	//var dbFile = utils.AdaptiveSqlite(config.Get().Database.Sqlite.DBFile)
-	db, err = gorm.Open(sqlite.Open(config.Get().Database.Sqlite.DBFile), &gorm.Config{})
+	db, err = gorm.Open(sqlite.Open(config.Get().Database.Sqlite.DBFile), &gorm.Config{
+		Logger: il,
+	})
 	if err != nil {
 		panic("InitSqlite error: " + err.Error())
 	}

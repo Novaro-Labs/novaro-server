@@ -1,7 +1,9 @@
 package service
 
 import (
+	"context"
 	"fmt"
+	"github.com/redis/go-redis/v9"
 	"github.com/zhufuyi/sponge/pkg/logger"
 	"gorm.io/gorm"
 	"novaro-server/dao"
@@ -20,6 +22,8 @@ type PostService struct {
 	commentsDao      *dao.CommentsDao
 	tagRecordDao     *dao.TagsRecordDao
 	postPointsDao    *dao.PostPointsDao
+	redisClient      *redis.Client
+	likeService      *LikeService
 }
 
 func NewPostService() *PostService {
@@ -34,16 +38,30 @@ func NewPostService() *PostService {
 		userDao:          dao.NewUsersDao(db),
 		tagRecordDao:     dao.NewTagsRecordDao(db),
 		postPointsDao:    dao.NewPostPointsDao(db),
+		redisClient:      model.GetRedisCli(),
+		likeService:      NewLikeService(),
 	}
 }
 
-func (s *PostService) GetLikeByUser(userId string) ([]model.Posts, error) {
+func (s *PostService) GetListByUser(p *model.PostsQuery) ([]model.Posts, error) {
+	return s.GetList(p)
+}
 
-	return s.dao.GetLikeByUser(userId)
+func (s *PostService) GetLikeByUser(p *model.PostsQuery) ([]model.Posts, error) {
+	posts, err := s.dao.GetLikeByUser(p)
+	posts = s.getLikeAmount(p.UserId, posts)
+	return posts, err
+}
+
+func (s *PostService) GetCommnetByUser(p *model.PostsQuery) ([]model.Posts, error) {
+	posts, err := s.dao.GetCommentByUser(p)
+	posts = s.getLikeAmount(p.UserId, posts)
+	return posts, err
 }
 
 func (s *PostService) GetList(p *model.PostsQuery) (resp []model.Posts, err error) {
 	resp, err = s.dao.GetPostsList(p)
+	resp = s.getLikeAmount(p.UserId, resp)
 
 	var wg sync.WaitGroup
 	semaphore := make(chan struct{}, 100)
@@ -55,13 +73,6 @@ func (s *PostService) GetList(p *model.PostsQuery) (resp []model.Posts, err erro
 
 			semaphore <- struct{}{}
 			defer func() { <-semaphore }()
-
-			// 获取标签
-			tags, total, _ := s.tagRecordDao.GetTagsRecordsByPostId(&resp[i])
-			resp[i].TagResp = tags
-			resp[i].TagsAmount = total
-			list, _ := s.tagsDao.GetTagsList()
-			resp[i].Tags = list
 
 			count, _ := s.commentsDao.GetCommentCount(resp[i].Id)
 			resp[i].CommentsAmount = count
@@ -82,33 +93,18 @@ func (s *PostService) GetList(p *model.PostsQuery) (resp []model.Posts, err erro
 	return resp, err
 }
 
-func (s *PostService) GetById(id string) (*model.Posts, error) {
-	resp, err := s.dao.GetPostsById(id)
-	tags, total, err := s.tagRecordDao.GetTagsRecordsByPostId(&resp)
-	resp.TagResp = tags
-	resp.TagsAmount = total
-	list, _ := s.tagsDao.GetTagsList()
-	resp.Tags = list
-	return &resp, err
+func (s *PostService) GetById(id string) (model.Posts, error) {
+	resp, err := s.GetList(&model.PostsQuery{
+		Id:   id,
+		Page: 1,
+		Size: 10,
+	})
+
+	return resp[0], err
 }
 
 func (s *PostService) PostExists(id string) (bool, error) {
 	return s.dao.PostExists(id)
-}
-
-func (s *PostService) GetByUserId(userId string) ([]model.Posts, error) {
-	resp, err := s.dao.GetPostsByUserId(userId)
-
-	// 处理标签
-	for i := range resp {
-		tags, total, err := s.tagRecordDao.GetTagsRecordsByPostId(&resp[i])
-		if err != nil {
-			resp[i].Tags = nil
-		}
-		resp[i].TagResp = tags
-		resp[i].TagsAmount = total
-	}
-	return resp, err
 }
 
 func (s *PostService) Save(posts *model.Posts) error {
@@ -167,4 +163,21 @@ func (s *PostService) Delete(id string) error {
 		return nil
 	})
 	return err
+}
+
+func (s *PostService) getLikeAmount(userId string, posts []model.Posts) []model.Posts {
+	ctx := context.Background()
+
+	for i := range posts {
+		key := fmt.Sprintf("likes:%s", posts[i].Id)
+		count, err := s.redisClient.SCard(ctx, key).Result()
+		posts[i].IsLike = s.likeService.IsLikeByUser(ctx, posts[i].Id, userId, key)
+		if err != nil {
+			posts[i].LikesAmount += 0
+			continue
+		}
+		posts[i].LikesAmount += int(count)
+	}
+
+	return posts
 }

@@ -21,7 +21,7 @@ func AddOtherRoutes(r *gin.RouterGroup) {
 		commentsApi := api.NewCommentApi()
 
 		cron.AddJob("@every 30s", func() {
-			commentsApi.SyncCommentsToDB()
+			//commentsApi.SyncCommentsToDB()
 		})
 
 		comments.GET("/getCommentsListByPostId", commentsApi.GetCommentsListByPostId)
@@ -38,7 +38,9 @@ func AddOtherRoutes(r *gin.RouterGroup) {
 		posts.POST("/save", postsApi.SavePosts)
 		posts.POST("/resave", postsApi.SavePosts)
 		posts.DELETE("/delete", postsApi.DelPostsById)
-		posts.GET("/like", postsApi.GetLikeByUser)
+		posts.POST("/listByUser", postsApi.GetListByUser)
+		posts.POST("/likes", postsApi.GetLikeByUser)
+		posts.POST("/comments", postsApi.GetCommentByUser)
 		posts.GET("/get", postsApi.GetPostById)
 	}
 
@@ -53,7 +55,7 @@ func AddOtherRoutes(r *gin.RouterGroup) {
 
 		recordsApi := api.NewTagsRecordApi()
 		cron.AddJob("@every 30s", func() {
-			recordsApi.SyncData()
+			//recordsApi.SyncData()
 		})
 
 		records.PUT("/add", recordsApi.AddTagsRecords)
@@ -116,5 +118,14 @@ func AddOtherRoutes(r *gin.RouterGroup) {
 		tokens.POST("/save", tokensApi.SaveNftToken)
 	}
 
+	likes := r.Group("/api/likes")
+	{
+		likesApi := api.NewLikeApi()
+		cron.AddJob("@every 30s", func() {
+			likesApi.FlushToDatabase()
+		})
+
+		likes.POST("/like", likesApi.Like)
+	}
 	cron.Start()
 }
