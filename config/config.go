@@ -185,7 +185,7 @@ type Client struct {
 	ClientId                string        `yaml:"clientId" json:"clientId"`
 	ClientSecret            string        `yaml:"clientSecret" json:"clientSecret"`
 	Proxy                   string        `yaml:"proxy" json:"proxy"`
-	InvitationCodeExpireDay time.Duration `yaml:"invitation_code_expire_day" json:"invitationCodeExpireDay"`
-	InvitationCodeLength    int           `yaml:"invitation_code_length" json:"InvitationCodeLength"`
+	InvitationCodeExpireDay time.Duration `yaml:"invitationCodeExpireDay" json:"invitationCodeExpireDay"`
+	InvitationCodeLength    int           `yaml:"InvitationCodeLength" json:"InvitationCodeLength"`
 	UploadPath              string        `yaml:"uploadPath" json:"uploadPath"`
 }

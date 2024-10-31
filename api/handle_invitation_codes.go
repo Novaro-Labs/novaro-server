@@ -23,7 +23,7 @@ func NewInvitationCodesApi() *InvitationCodesApi {
 // @Produce json
 // @Success 200 " Successfully generated and saved invitation codes"
 // @Failure 500 " Error generating and adding invitation codes"
-// @Router /v1/api/invitation/codes/add [post]
+// @Router /v1/api/invitation/codes/add [get]
 func (api *InvitationCodesApi) MakeInvitationCodes(c *gin.Context) {
 	currentUser := auth.CurrentUser(c)
 	if currentUser == nil {

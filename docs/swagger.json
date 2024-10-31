@@ -30,10 +30,10 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK"
+                        "description": ""
                     },
                     "400": {
-                        "description": "Bad Request"
+                        "description": ""
                     }
                 }
             }
@@ -62,10 +62,10 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK"
+                        "description": ""
                     },
                     "400": {
-                        "description": "Bad Request"
+                        "description": ""
                     }
                 }
             }
@@ -103,7 +103,7 @@
                         }
                     },
                     "400": {
-                        "description": "Bad Request"
+                        "description": ""
                     }
                 }
             }
@@ -141,7 +141,7 @@
                         }
                     },
                     "400": {
-                        "description": "Bad Request"
+                        "description": ""
                     }
                 }
             }
@@ -179,13 +179,13 @@
                         }
                     },
                     "400": {
-                        "description": "Bad Request"
+                        "description": ""
                     }
                 }
             }
         },
         "/v1/api/invitation/codes/add": {
-            "post": {
+            "get": {
                 "description": "Generate new invitation codes and save to the system",
                 "consumes": [
                     "application/json"
@@ -200,224 +200,6 @@
                     },
                     "500": {
                         "description": " Error generating and adding invitation codes"
-                    }
-                }
-            }
-        },
-        "/v1/api/posts/delPostsById": {
-            "delete": {
-                "description": "Deletes a post from the database based on the provided ID",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "posts"
-                ],
-                "summary": "Delete a post by ID",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Post ID",
-                        "name": "id",
-                        "in": "query",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK"
-                    },
-                    "400": {
-                        "description": "Bad Request"
-                    }
-                }
-            }
-        },
-        "/v1/api/posts/getPostsById": {
-            "get": {
-                "description": "Retrieves a post from the database based on the provided ID",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "posts"
-                ],
-                "summary": "Get a post by ID",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "PostID",
-                        "name": "id",
-                        "in": "query",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/model.Posts"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request"
-                    }
-                }
-            }
-        },
-        "/v1/api/posts/getPostsByUserId": {
-            "get": {
-                "description": "Retrieves all posts from the database for a specific user",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "posts"
-                ],
-                "summary": "Get posts by user ID",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "UserID",
-                        "name": "userId",
-                        "in": "query",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/model.Posts"
-                            }
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request"
-                    }
-                }
-            }
-        },
-        "/v1/api/posts/getPostsList": {
-            "post": {
-                "description": "Retrieves a list of posts based on the provided query parameters",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "posts"
-                ],
-                "summary": "Get a list of posts",
-                "parameters": [
-                    {
-                        "description": "Query parameters",
-                        "name": "query",
-                        "in": "body",
-                        "schema": {
-                            "$ref": "#/definitions/model.PostsQuery"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/model.Posts"
-                            }
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request"
-                    }
-                }
-            }
-        },
-        "/v1/api/posts/savePosts": {
-            "post": {
-                "description": "Creates a new post in the database",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "posts"
-                ],
-                "summary": "Save a new post",
-                "parameters": [
-                    {
-                        "description": "Post object",
-                        "name": "post",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/api.PostsApi"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/model.Posts"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request"
-                    }
-                }
-            }
-        },
-        "/v1/api/posts/saveRePosts": {
-            "post": {
-                "description": "Creates a new repost in the database",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "posts"
-                ],
-                "summary": "Save a new repost",
-                "parameters": [
-                    {
-                        "description": "Post object",
-                        "name": "post",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/api.RePosts"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/model.Posts"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request"
                     }
                 }
             }
@@ -443,7 +225,7 @@
                         }
                     },
                     "400": {
-                        "description": "Bad Request"
+                        "description": ""
                     }
                 }
             }
@@ -477,7 +259,7 @@
                         "description": "Successfully added tags records"
                     },
                     "400": {
-                        "description": "Bad Request"
+                        "description": ""
                     }
                 }
             }
@@ -501,28 +283,6 @@
                 }
             }
         },
-        "api.PostsApi": {
-            "type": "object",
-            "properties": {
-                "content": {
-                    "type": "string"
-                },
-                "userId": {
-                    "type": "string"
-                }
-            }
-        },
-        "api.RePosts": {
-            "type": "object",
-            "properties": {
-                "originalId": {
-                    "type": "string"
-                },
-                "postsApi": {
-                    "$ref": "#/definitions/api.PostsApi"
-                }
-            }
-        },
         "api.TagsRecordsApi": {
             "type": "object",
             "properties": {
@@ -530,6 +290,9 @@
                     "type": "string"
                 },
                 "tagId": {
+                    "type": "string"
+                },
+                "userId": {
                     "type": "string"
                 }
             }
@@ -558,6 +321,9 @@
                 "postId": {
                     "type": "string"
                 },
+                "user": {
+                    "$ref": "#/definitions/model.Users"
+                },
                 "userId": {
                     "type": "string"
                 }
@@ -580,6 +346,49 @@
                 }
             }
         },
+        "model.NftInfo": {
+            "type": "object",
+            "properties": {
+                "createAt": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "level": {
+                    "type": "integer"
+                },
+                "nft": {
+                    "$ref": "#/definitions/model.NftLevel"
+                },
+                "points": {
+                    "type": "number"
+                },
+                "wallet": {
+                    "type": "string"
+                }
+            }
+        },
+        "model.NftLevel": {
+            "type": "object",
+            "properties": {
+                "createdAt": {
+                    "type": "string"
+                },
+                "left": {
+                    "type": "integer"
+                },
+                "level": {
+                    "type": "string"
+                },
+                "right": {
+                    "type": "integer"
+                },
+                "url": {
+                    "type": "string"
+                }
+            }
+        },
         "model.Posts": {
             "type": "object",
             "properties": {
@@ -589,8 +398,8 @@
                         "$ref": "#/definitions/model.Imgs"
                     }
                 },
-                "collectionsAmount": {
-                    "type": "integer"
+                "comments": {
+                    "$ref": "#/definitions/model.Comments"
                 },
                 "commentsAmount": {
                     "type": "integer"
@@ -604,8 +413,11 @@
                 "id": {
                     "type": "string"
                 },
-                "isCollected": {
+                "isLike": {
                     "type": "boolean"
+                },
+                "likesAmount": {
+                    "type": "integer"
                 },
                 "originalId": {
                     "type": "string"
@@ -616,25 +428,14 @@
                 "sourceId": {
                     "type": "string"
                 },
-                "tags": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/model.Tags"
-                    }
+                "user": {
+                    "$ref": "#/definitions/model.Users"
                 },
                 "userId": {
                     "type": "string"
-                }
-            }
-        },
-        "model.PostsQuery": {
-            "type": "object",
-            "properties": {
-                "id": {
-                    "type": "string"
                 },
-                "userId": {
-                    "type": "string"
+                "viewAmount": {
+                    "type": "integer"
                 }
             }
         },
@@ -653,10 +454,54 @@
                         "$ref": "#/definitions/model.Posts"
                     }
                 },
-                "tagColor": {
+                "sourceId": {
+                    "type": "string"
+                }
+            }
+        },
+        "model.Users": {
+            "type": "object",
+            "properties": {
+                "avatar": {
                     "type": "string"
                 },
-                "tagType": {
+                "createdAt": {
+                    "type": "string"
+                },
+                "creditScore": {
+                    "type": "number"
+                },
+                "followers": {
+                    "type": "integer"
+                },
+                "following": {
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "invitationCode": {
+                    "type": "string"
+                },
+                "lastLogin": {
+                    "type": "string"
+                },
+                "nftInfo": {
+                    "$ref": "#/definitions/model.NftInfo"
+                },
+                "twitterID": {
+                    "type": "string"
+                },
+                "userLevel": {
+                    "type": "integer"
+                },
+                "userName": {
+                    "type": "string"
+                },
+                "userScore": {
+                    "type": "number"
+                },
+                "walletPublicKey": {
                     "type": "string"
                 }
             }

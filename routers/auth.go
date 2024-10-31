@@ -60,7 +60,7 @@ func login(c *gin.Context) {
 		"code_challenge_method": {"plain"},
 	}
 
-	url := "https://x.com/i/oauth2/authorize?" + querys.Encode()
+	url := "https://twitter.com/i/oauth2/authorize?" + querys.Encode()
 	c.Redirect(302, url)
 }
 

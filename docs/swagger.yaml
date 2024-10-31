@@ -10,25 +10,13 @@ definitions:
       userId:
         type: string
     type: object
-  api.PostsApi:
-    properties:
-      content:
-        type: string
-      userId:
-        type: string
-    type: object
-  api.RePosts:
-    properties:
-      originalId:
-        type: string
-      postsApi:
-        $ref: '#/definitions/api.PostsApi'
-    type: object
   api.TagsRecordsApi:
     properties:
       postId:
         type: string
       tagId:
+        type: string
+      userId:
         type: string
     type: object
   model.Comments:
@@ -47,6 +35,8 @@ definitions:
         type: string
       postId:
         type: string
+      user:
+        $ref: '#/definitions/model.Users'
       userId:
         type: string
     type: object
@@ -61,14 +51,42 @@ definitions:
       sourceId:
         type: string
     type: object
+  model.NftInfo:
+    properties:
+      createAt:
+        type: string
+      id:
+        type: string
+      level:
+        type: integer
+      nft:
+        $ref: '#/definitions/model.NftLevel'
+      points:
+        type: number
+      wallet:
+        type: string
+    type: object
+  model.NftLevel:
+    properties:
+      createdAt:
+        type: string
+      left:
+        type: integer
+      level:
+        type: string
+      right:
+        type: integer
+      url:
+        type: string
+    type: object
   model.Posts:
     properties:
       Imgs:
         items:
           $ref: '#/definitions/model.Imgs'
         type: array
-      collectionsAmount:
-        type: integer
+      comments:
+        $ref: '#/definitions/model.Comments'
       commentsAmount:
         type: integer
       content:
@@ -77,27 +95,22 @@ definitions:
         type: string
       id:
         type: string
-      isCollected:
+      isLike:
         type: boolean
+      likesAmount:
+        type: integer
       originalId:
         type: string
       repostsAmount:
         type: integer
       sourceId:
         type: string
-      tags:
-        items:
-          $ref: '#/definitions/model.Tags'
-        type: array
+      user:
+        $ref: '#/definitions/model.Users'
       userId:
         type: string
-    type: object
-  model.PostsQuery:
-    properties:
-      id:
-        type: string
-      userId:
-        type: string
+      viewAmount:
+        type: integer
     type: object
   model.Tags:
     properties:
@@ -109,9 +122,38 @@ definitions:
         items:
           $ref: '#/definitions/model.Posts'
         type: array
-      tagColor:
+      sourceId:
         type: string
-      tagType:
+    type: object
+  model.Users:
+    properties:
+      avatar:
+        type: string
+      createdAt:
+        type: string
+      creditScore:
+        type: number
+      followers:
+        type: integer
+      following:
+        type: integer
+      id:
+        type: string
+      invitationCode:
+        type: string
+      lastLogin:
+        type: string
+      nftInfo:
+        $ref: '#/definitions/model.NftInfo'
+      twitterID:
+        type: string
+      userLevel:
+        type: integer
+      userName:
+        type: string
+      userScore:
+        type: number
+      walletPublicKey:
         type: string
     type: object
 info:
@@ -133,9 +175,9 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: ""
         "400":
-          description: Bad Request
+          description: ""
       summary: Add a new comment
       tags:
       - comments
@@ -154,9 +196,9 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: ""
         "400":
-          description: Bad Request
+          description: ""
       summary: Delete a comment by ID
       tags:
       - comments
@@ -181,7 +223,7 @@ paths:
               $ref: '#/definitions/model.Comments'
             type: array
         "400":
-          description: Bad Request
+          description: ""
       summary: Get comments by parent ID
       tags:
       - comments
@@ -206,7 +248,7 @@ paths:
               $ref: '#/definitions/model.Comments'
             type: array
         "400":
-          description: Bad Request
+          description: ""
       summary: Get comments by post ID
       tags:
       - comments
@@ -231,12 +273,12 @@ paths:
               $ref: '#/definitions/model.Comments'
             type: array
         "400":
-          description: Bad Request
+          description: ""
       summary: Get comments by user ID
       tags:
       - comments
   /v1/api/invitation/codes/add:
-    post:
+    get:
       consumes:
       - application/json
       description: Generate new invitation codes and save to the system
@@ -248,148 +290,6 @@ paths:
         "500":
           description: ' Error generating and adding invitation codes'
       summary: Generate new invitation codes
-  /v1/api/posts/delPostsById:
-    delete:
-      consumes:
-      - application/json
-      description: Deletes a post from the database based on the provided ID
-      parameters:
-      - description: Post ID
-        in: query
-        name: id
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-        "400":
-          description: Bad Request
-      summary: Delete a post by ID
-      tags:
-      - posts
-  /v1/api/posts/getPostsById:
-    get:
-      consumes:
-      - application/json
-      description: Retrieves a post from the database based on the provided ID
-      parameters:
-      - description: PostID
-        in: query
-        name: id
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/model.Posts'
-        "400":
-          description: Bad Request
-      summary: Get a post by ID
-      tags:
-      - posts
-  /v1/api/posts/getPostsByUserId:
-    get:
-      consumes:
-      - application/json
-      description: Retrieves all posts from the database for a specific user
-      parameters:
-      - description: UserID
-        in: query
-        name: userId
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            items:
-              $ref: '#/definitions/model.Posts'
-            type: array
-        "400":
-          description: Bad Request
-      summary: Get posts by user ID
-      tags:
-      - posts
-  /v1/api/posts/getPostsList:
-    post:
-      consumes:
-      - application/json
-      description: Retrieves a list of posts based on the provided query parameters
-      parameters:
-      - description: Query parameters
-        in: body
-        name: query
-        schema:
-          $ref: '#/definitions/model.PostsQuery'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            items:
-              $ref: '#/definitions/model.Posts'
-            type: array
-        "400":
-          description: Bad Request
-      summary: Get a list of posts
-      tags:
-      - posts
-  /v1/api/posts/savePosts:
-    post:
-      consumes:
-      - application/json
-      description: Creates a new post in the database
-      parameters:
-      - description: Post object
-        in: body
-        name: post
-        required: true
-        schema:
-          $ref: '#/definitions/api.PostsApi'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/model.Posts'
-        "400":
-          description: Bad Request
-      summary: Save a new post
-      tags:
-      - posts
-  /v1/api/posts/saveRePosts:
-    post:
-      consumes:
-      - application/json
-      description: Creates a new repost in the database
-      parameters:
-      - description: Post object
-        in: body
-        name: post
-        required: true
-        schema:
-          $ref: '#/definitions/api.RePosts'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/model.Posts'
-        "400":
-          description: Bad Request
-      summary: Save a new repost
-      tags:
-      - posts
   /v1/api/tags/list:
     get:
       description: Retrieve a list of all tags
@@ -403,7 +303,7 @@ paths:
               $ref: '#/definitions/model.Tags'
             type: array
         "400":
-          description: Bad Request
+          description: ""
       summary: Get list of tags
       tags:
       - tags
@@ -425,7 +325,7 @@ paths:
         "200":
           description: Successfully added tags records
         "400":
-          description: Bad Request
+          description: ""
       summary: Add new tags records
       tags:
       - tags-records

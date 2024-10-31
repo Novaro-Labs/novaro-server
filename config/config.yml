@@ -59,11 +59,11 @@ rabbitmq:
 
 
 client:
-  client_id: cXZUcmZPcDFJRy1LS1k2SE1vSUs6MTpjaQ
-  client_secret:
+  clientId: V19YdlA5VnBybXNTVHlCQXdYRFQ6MTpjaQ
+  clientSecret: P3kyb7zkF_ZHKVd3UDzMifsFqhGkp8iCaUhfQWRm1i0UIVndHK
   proxy:
-  invitation_code_expire_day: 7
-  invitation_code_length: 8
+  invitationCodeExpireDay: 7
+  InvitationCodeLength: 8
   uploadPath: ./assets
 
 
