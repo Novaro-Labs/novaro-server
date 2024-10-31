@@ -22,7 +22,7 @@ jobs:
         go-version: 1.22.3
 
     - name: Build 
-      run: CGO_ENABLED=0 go build -o novaro-server -tags=jsoniter
+      run: CGO_ENABLED=0 go build -o novaro-server cmd/main.go
 
     - name: SCP Files 
       uses: appleboy/scp-action@master
