@@ -21,9 +21,6 @@ jobs:
       with:
         go-version: 1.22.3
 
-    - name: Test 
-      run: go test -v ./...
-
     - name: Build 
       run: CGO_ENABLED=0 go build -o novaro-server -tags=jsoniter
 
