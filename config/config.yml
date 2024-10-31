@@ -60,7 +60,7 @@ rabbitmq:
 
 client:
   clientId: V19YdlA5VnBybXNTVHlCQXdYRFQ6MTpjaQ
-  clientSecret: P3kyb7zkF_ZHKVd3UDzMifsFqhGkp8iCaUhfQWRm1i0UIVndHK
+  clientSecret:
   proxy:
   invitationCodeExpireDay: 7
   InvitationCodeLength: 8
