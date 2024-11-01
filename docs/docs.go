@@ -275,6 +275,38 @@ const docTemplate = `{
                     }
                 }
             }
+        },
+        "/v1/api/upload/getTokenImg": {
+            "get": {
+                "description": "get the image based on the tokenId",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "upload"
+                ],
+                "summary": "get image",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "sourceId",
+                        "name": "sourceId",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": ""
+                    },
+                    "400": {
+                        "description": ""
+                    }
+                }
+            }
         }
     },
     "definitions": {

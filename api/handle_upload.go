@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"log"
 	"novaro-server/model"
+	"novaro-server/service"
 	"novaro-server/utils"
 	"os"
 	"path/filepath"
@@ -62,4 +63,27 @@ func (api *UploadApi) LoadSql(c *gin.Context) {
 	if err != nil {
 		log.Fatal("Error walking through directory:", err)
 	}
+}
+
+// TokenImg godoc
+// @Summary get image
+// @Description get the image based on the tokenId
+// @Tags upload
+// @Accept json
+// @Produce json
+// @Param sourceId query string true "sourceId"
+// @Success 200
+// @Failure 400
+// @Router /v1/api/upload/getTokenImg [get]
+func (api *UploadApi) TokenImg(c *gin.Context) {
+	path, err := service.NewImgsService().GetBySourceId(c.Query("sourceId"))
+	if err != nil {
+		c.JSON(500, gin.H{"code": 500, "msg": err.Error()})
+		return
+	}
+	c.JSON(200, gin.H{
+		"code": 200,
+		"msg":  "success",
+		"data": path,
+	})
 }

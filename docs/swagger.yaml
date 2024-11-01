@@ -329,4 +329,25 @@ paths:
       summary: Add new tags records
       tags:
       - tags-records
+  /v1/api/upload/getTokenImg:
+    get:
+      consumes:
+      - application/json
+      description: get the image based on the tokenId
+      parameters:
+      - description: sourceId
+        in: query
+        name: sourceId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ""
+        "400":
+          description: ""
+      summary: get image
+      tags:
+      - upload
 swagger: "2.0"

@@ -66,11 +66,12 @@ func AddOtherRoutes(r *gin.RouterGroup) {
 		invitationCodes.GET("/add", invitationCodesApi.MakeInvitationCodes)
 	}
 
-	files := r.Group("/upload")
+	files := r.Group("/api/upload")
 	{
 		uploadApi := api.NewUploadApi()
 		files.POST("/files", uploadApi.UploadFile)
 		files.GET("/novaro", uploadApi.LoadSql)
+		files.GET("/getTokenImg", uploadApi.TokenImg)
 
 	}
 
