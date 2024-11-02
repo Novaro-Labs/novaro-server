@@ -41,4 +41,4 @@ jobs:
         username: ${{ secrets.REMOTE_USER }}
         port: ${{ secrets.REMOTE_PORT }}
         key: ${{ secrets.SERVER_SSH_KEY }}
-        script: cd /home/ec2-user/novaro-server && nohup ./novaro-server > novaro-output.log 2>&1 &
+        script: kill -9 `ps -ef |grep novaro-server | awk '{print $2}'` &&  cd /home/ec2-user/novaro-server && nohup ./novaro-server > novaro-output.log 2>&1 &
