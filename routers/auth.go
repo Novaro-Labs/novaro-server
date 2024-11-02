@@ -47,13 +47,14 @@ func login(c *gin.Context) {
 		queryParams.Add("icode", icode)
 	}
 
-	redirectUri := redirectUrl(c, queryParams)
+	//redirectUri := redirectUrl(c, queryParams)
 	codeVerifier := generateCodeVerifier()
 
 	querys := url.Values{
-		"response_type":         {"code"},
-		"client_id":             {config.Get().Client.ClientId},
-		"redirect_uri":          {redirectUri},
+		"response_type": {"code"},
+		"client_id":     {config.Get().Client.ClientId},
+		//"redirect_uri":          {redirectUri},
+		"redirect_uri":          {"https://novaro-web-demo.vercel.app"},
 		"scope":                 {"tweet.read+users.read+follows.read+offline.access"},
 		"state":                 {codeVerifier},
 		"code_challenge":        {codeVerifier},

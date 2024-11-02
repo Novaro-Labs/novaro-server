@@ -5,6 +5,7 @@ go 1.22.3
 require (
 	github.com/casbin/casbin/v2 v2.88.0
 	github.com/gin-contrib/authz v1.0.2
+	github.com/gin-contrib/cors v1.3.1
 	github.com/gin-contrib/graceful v1.0.2
 	github.com/gin-contrib/logger v1.1.2
 	github.com/gin-contrib/sessions v1.0.1

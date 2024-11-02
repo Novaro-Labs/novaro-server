@@ -11,6 +11,7 @@ import (
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
 	_ "novaro-server/docs"
+	"novaro-server/middlewares"
 	"os/signal"
 	"syscall"
 )
@@ -40,7 +41,7 @@ func NewRouter() *graceful.Graceful {
 	}
 	//swag
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
-
+	r.Use(middlewares.Cors())
 	v1 := r.Group("/v1", authz.NewAuthorizer(e))
 
 	AddHomeRoutes(v1)
