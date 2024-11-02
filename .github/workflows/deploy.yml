@@ -34,11 +34,20 @@ jobs:
         source: 'novaro-server'
         target: ${{ secrets.REMOTE_TARGET }}
 
-    - name: SSH Remote Commands
+    - name: Kill Server
       uses: appleboy/ssh-action@master
       with:
         host: ${{ secrets.REMOTE_HOST }}
         username: ${{ secrets.REMOTE_USER }}
         port: ${{ secrets.REMOTE_PORT }}
         key: ${{ secrets.SERVER_SSH_KEY }}
-        script: (kill -9 $(ps -ef | grep novaro-server | grep -v grep | awk '{print $2}') ) 2>/dev/null; cd /home/ec2-user/novaro-server && nohup ./novaro-server > novaro-output.log 2>&1 &
+        script: kill -9 $(ps -ef | grep novaro-server | grep -v grep | awk '{print $2}') 2>/dev/null
+
+    - name: Start Novaro Server
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ secrets.REMOTE_HOST }}
+        username: ${{ secrets.REMOTE_USER }}
+        port: ${{ secrets.REMOTE_PORT }}
+        key: ${{ secrets.SERVER_SSH_KEY }}
+        script: cd /home/ec2-user/novaro-server && nohup ./novaro-server > novaro-output.log 2>&1 &
