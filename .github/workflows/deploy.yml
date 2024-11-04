@@ -51,3 +51,4 @@ jobs:
         port: ${{ secrets.REMOTE_PORT }}
         key: ${{ secrets.SERVER_SSH_KEY }}
         script: cd /home/ec2-user/novaro-server && nohup ./novaro-server > novaro-output.log 2>&1 &
+        
