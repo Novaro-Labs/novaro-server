@@ -67,4 +67,9 @@ client:
   uploadPath: ./assets
 
 
-
+x:
+  redirectUri: https://novaro-web-demo.vercel.app/auth/x/callback
+  scope: tweet.read+users.read+follows.read+offline.access
+  authorizeUrl: https://twitter.com/i/oauth2/authorize?
+  oauth2TokenUrl: https://api.x.com/2/oauth2/token
+  userProfile: https://api.x.com/2/users/me?user.fields=created_at,profile_image_url

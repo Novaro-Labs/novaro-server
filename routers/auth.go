@@ -54,14 +54,14 @@ func login(c *gin.Context) {
 		"response_type": {"code"},
 		"client_id":     {config.Get().Client.ClientId},
 		//"redirect_uri":          {redirectUri},
-		"redirect_uri":          {"https://novaro-web-demo.vercel.app"},
-		"scope":                 {"tweet.read+users.read+follows.read+offline.access"},
+		"redirect_uri":          {config.Get().X.RedirectUri},
+		"scope":                 {config.Get().X.Scope},
 		"state":                 {codeVerifier},
 		"code_challenge":        {codeVerifier},
 		"code_challenge_method": {"plain"},
 	}
 
-	url := "https://twitter.com/i/oauth2/authorize?" + querys.Encode()
+	url := config.Get().X.AuthorizeUrl + querys.Encode()
 	c.Redirect(302, url)
 }
 
@@ -135,7 +135,7 @@ func getToken(code, redirectUri, codeVerifier string) (string, error) {
 	}
 	body := form.Encode()
 	fmt.Printf("token request body: %v\n", body)
-	request, err := http.NewRequest("POST", "https://api.x.com/2/oauth2/token", strings.NewReader(body))
+	request, err := http.NewRequest("POST", config.Get().X.Oauth2TokenUrl, strings.NewReader(body))
 	if err != nil {
 		log.LogError(err, "new token request error")
 		return "", err
@@ -168,7 +168,7 @@ func getToken(code, redirectUri, codeVerifier string) (string, error) {
 }
 
 func getUserInfo(token string) (*model.TwitterUserInfo, error) {
-	request, err := http.NewRequest("GET", "https://api.x.com/2/users/me?user.fields=created_at,profile_image_url", nil)
+	request, err := http.NewRequest("GET", config.Get().X.UserProfile, nil)
 	if err != nil {
 		log.LogError(err, "new userinfo request error")
 		return nil, err

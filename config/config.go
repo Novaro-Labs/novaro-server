@@ -41,6 +41,7 @@ type Config struct {
 	Redis      Redis        `yaml:"redis" json:"redis"`
 	Client     Client       `yaml:"client" json:"client"`
 	RabbitMQ   RabbitMQ     `json:"rabbitmq" yaml:"rabbitmq"`
+	X          X            `json:"x" yaml:"x"`
 }
 
 type Consul struct {
@@ -188,4 +189,12 @@ type Client struct {
 	InvitationCodeExpireDay time.Duration `yaml:"invitationCodeExpireDay" json:"invitationCodeExpireDay"`
 	InvitationCodeLength    int           `yaml:"InvitationCodeLength" json:"InvitationCodeLength"`
 	UploadPath              string        `yaml:"uploadPath" json:"uploadPath"`
+}
+
+type X struct {
+	RedirectUri    string `yaml:"redirectUri" json:"redirectUri"`
+	Scope          string `yaml:"scope" json:"scope"`
+	AuthorizeUrl   string `yaml:"authorizeUrl" json:"authorizeUrl"`
+	Oauth2TokenUrl string `yaml:"oauth2TokenUrl" json:"oauth2TokenUrl"`
+	UserProfile    string `yaml:"userProfile" json:"userProfile"`
 }
