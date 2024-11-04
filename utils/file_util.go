@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"crypto/sha256"
 	"fmt"
 	"github.com/zhufuyi/sponge/pkg/logger"
 	"io"
@@ -28,10 +29,20 @@ func UploadFiles(w http.ResponseWriter, r *http.Request) ([]*model.Imgs, error) 
 	}
 
 	files := r.MultipartForm.File["images"]
-	sourceId := r.FormValue("sourceId")
-	if sourceId == "" {
-		return nil, fmt.Errorf("sourceId is empty")
+	//sourceId := r.FormValue("sourceId")
+	//if sourceId == "" {
+	//	return nil, fmt.Errorf("sourceId is empty")
+	//}
+	open, err := files[0].Open()
+	if err != nil {
+		return nil, err
 	}
+	fileHash, err := HashMultipartFile(open)
+	if err != nil {
+		return nil, err
+	}
+	sourceId := fmt.Sprintf("%x", fileHash)
+	fmt.Println(sourceId)
 
 	var imglist []*model.Imgs
 	var errlist []error
@@ -54,7 +65,7 @@ func UploadFiles(w http.ResponseWriter, r *http.Request) ([]*model.Imgs, error) 
 		imglist = append(imglist, imgs)
 	}
 
-	logger.Errorf("upload files fail:total:%d", len(errlist))
+	logger.Infof("upload files fail:total:%d", len(errlist))
 
 	return imglist, nil
 
@@ -97,4 +108,13 @@ func handleFile(file multipart.File, fileHeader *multipart.FileHeader, sourceId 
 		return nil, err
 	}
 	return uploadFile, nil
+}
+
+func HashMultipartFile(file multipart.File) ([]byte, error) {
+	h := sha256.New()
+	_, err := io.Copy(h, file)
+	if err != nil {
+		return nil, err
+	}
+	return h.Sum(nil), nil
 }
