@@ -13,7 +13,6 @@ import (
 	"novaro-server/config"
 	"novaro-server/model"
 	"novaro-server/service"
-	"novaro-server/utils"
 	"strings"
 	"time"
 
@@ -38,6 +37,10 @@ func login(c *gin.Context) {
 	query := c.Request.URL.Query()
 	if query.Has("icode") {
 		icode := query.Get("icode")
+		if len(icode) != 6 {
+			c.JSON(http.StatusBadRequest, gin.H{"message": "invalid invitation code, length should be 6"})
+			return
+		}
 		if exist, err := service.NewInvitationCodesService().CheckInvitationCodes(icode); err != nil {
 			c.JSON(500, gin.H{"error": err.Error()})
 			return
@@ -45,9 +48,7 @@ func login(c *gin.Context) {
 			c.JSON(400, gin.H{"error": "invalid invitation code"})
 			return
 		}
-		if !utils.IsSixDigitCode(icode) {
-			c.JSON(http.StatusBadRequest, gin.H{"message": "invalid invitation code, has to be six digits"})
-		}
+
 		queryParams.Add("icode", icode)
 	}
 
