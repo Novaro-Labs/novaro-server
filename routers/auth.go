@@ -13,6 +13,7 @@ import (
 	"novaro-server/config"
 	"novaro-server/model"
 	"novaro-server/service"
+	"novaro-server/utils"
 	"strings"
 	"time"
 
@@ -43,6 +44,9 @@ func login(c *gin.Context) {
 		} else if !exist {
 			c.JSON(400, gin.H{"error": "invalid invitation code"})
 			return
+		}
+		if !utils.IsSixDigitCode(icode) {
+			c.JSON(http.StatusBadRequest, gin.H{"message": "invalid invitation code, has to be six digits"})
 		}
 		queryParams.Add("icode", icode)
 	}
