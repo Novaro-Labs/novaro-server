@@ -53,18 +53,18 @@ func login(c *gin.Context) {
 	}
 
 	//redirectUri := redirectUrl(c, queryParams)
-	codeVerifier := generateCodeVerifier()
+	// codeVerifier := generateCodeVerifier()
 
-	querys := url.Values{
-		"response_type": {"code"},
-		"client_id":     {config.Get().Client.ClientId},
-		//"redirect_uri":          {redirectUri},
-		"redirect_uri":          {config.Get().X.RedirectUri},
-		"scope":                 {config.Get().X.Scope},
-		"state":                 {codeVerifier},
-		"code_challenge":        {codeVerifier},
-		"code_challenge_method": {"plain"},
-	}
+	// querys := url.Values{
+	// 	"response_type": {"code"},
+	// 	"client_id":     {config.Get().Client.ClientId},
+	// 	//"redirect_uri":          {redirectUri},
+	// 	"redirect_uri":          {config.Get().X.RedirectUri},
+	// 	"scope":                 {config.Get().X.Scope},
+	// 	"state":                 {codeVerifier},
+	// 	"code_challenge":        {codeVerifier},
+	// 	"code_challenge_method": {"plain"},
+	// }
 
 	//url := config.Get().X.AuthorizeUrl + querys.Encode()
 	//c.Redirect(302, url)
