@@ -67,7 +67,8 @@ func login(c *gin.Context) {
 	}
 
 	url := config.Get().X.AuthorizeUrl + querys.Encode()
-	c.Redirect(302, url)
+	//c.Redirect(302, url)
+	c.JSON(200, gin.H{"message": "the code verification passed"})
 }
 
 func callback(c *gin.Context) {
