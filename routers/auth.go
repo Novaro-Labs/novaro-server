@@ -35,13 +35,13 @@ func AddAuthRoutes(rg *gin.RouterGroup) {
 func login(c *gin.Context) {
 	queryParams := &url.Values{}
 	query := c.Request.URL.Query()
-	if query.Has("icode") {
-		icode := query.Get("icode")
-		if len(icode) != 6 {
+	if query.Has("code") {
+		code := query.Get("code")
+		if len(code) != 6 {
 			c.JSON(http.StatusBadRequest, gin.H{"message": "invalid invitation code, length should be 6"})
 			return
 		}
-		if exist, err := service.NewInvitationCodesService().CheckInvitationCodes(icode); err != nil {
+		if exist, err := service.NewInvitationCodesService().CheckInvitationCodes(code); err != nil {
 			c.JSON(500, gin.H{"error": err.Error()})
 			return
 		} else if !exist {
@@ -49,7 +49,7 @@ func login(c *gin.Context) {
 			return
 		}
 
-		queryParams.Add("icode", icode)
+		queryParams.Add("code", code)
 	}
 
 	//redirectUri := redirectUrl(c, queryParams)
@@ -75,9 +75,9 @@ func callback(c *gin.Context) {
 	code := query.Get("code")
 
 	queryParams := &url.Values{}
-	if query.Has("icode") {
-		invitation_code := query.Get("icode")
-		queryParams.Add("icode", invitation_code)
+	if query.Has("code") {
+		invitation_code := query.Get("code")
+		queryParams.Add("code", invitation_code)
 	}
 	redirectUri := redirectUrl(c, queryParams)
 
