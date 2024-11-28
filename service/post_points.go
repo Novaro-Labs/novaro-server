@@ -83,10 +83,10 @@ func (s *PostPointsService) processRecords(records []model.TagsRecords) ([]model
 		go func(i int, item *model.TagsRecords) {
 			defer wg.Done()
 			user, err := s.userDao.GetById(item.UserId)
-			if err == nil && user.WalletPublicKey != nil {
+			if err == nil && user.WalletPublicKey != "" {
 				mu.Lock()
 				userPoints = append(userPoints, model.PointsHistory{
-					Wallet:   &user.NftInfo.Wallet,
+					Wallet:   user.NftInfo.Wallet,
 					Points:   item.Points,
 					Status:   0,
 					CreateAt: &now,
@@ -119,7 +119,7 @@ func (s *PostPointsService) processPostHistory() error {
 	for _, history := range histories {
 
 		postUser := s.postDao.GetPostIdByUser(history.PostId)
-		if postUser.User.WalletPublicKey == nil {
+		if postUser.User.WalletPublicKey == "" {
 			continue
 		}
 		now := time.Now()

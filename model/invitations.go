@@ -13,6 +13,7 @@ type Invitations struct {
 	InviterId      string    `json:"inviterId"`
 	InviteeId      string    `json:"inviteeId"`
 	InvitationCode string    `json:"invitationCode"`
+	Rewards        int64     `json:"rewards"`
 	InvitedAt      time.Time `json:"invitedAt"`
 }
 

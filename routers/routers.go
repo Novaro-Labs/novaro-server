@@ -2,6 +2,11 @@ package routers
 
 import (
 	"context"
+	_ "novaro-server/docs"
+	"novaro-server/middlewares"
+	"os/signal"
+	"syscall"
+
 	"github.com/casbin/casbin/v2"
 	"github.com/gin-contrib/authz"
 	"github.com/gin-contrib/graceful"
@@ -10,10 +15,6 @@ import (
 	"github.com/gin-contrib/sessions/cookie"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
-	_ "novaro-server/docs"
-	"novaro-server/middlewares"
-	"os/signal"
-	"syscall"
 )
 
 var (
@@ -33,7 +34,13 @@ func NewRouter() *graceful.Graceful {
 
 	defer r.Close()
 	r.Use(logger.SetLogger())
-	r.Use(sessions.Sessions("mysession", cookie.NewStore(secret)))
+	store := cookie.NewStore([]byte("secret"))
+	store.Options(sessions.Options{
+		MaxAge:   3600 * 24,
+		HttpOnly: true,
+	})
+
+	r.Use(sessions.Sessions("mysession", store))
 
 	e, err := casbin.NewEnforcer()
 	if err != nil {

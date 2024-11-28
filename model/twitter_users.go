@@ -9,6 +9,7 @@ type TwitterUsers struct {
 	TwitterUserName  string     `json:"twitterUserName"`
 	TwitterAvatar    *string    `json:"twitterAvatar"`
 	TwitterFollowers *int       `json:"twitterFollowers"`
+	Wallet           string     `json:"wallet"`
 	TwitterCreatedAt *time.Time `json:"twitterCreatedAt"`
 }
 

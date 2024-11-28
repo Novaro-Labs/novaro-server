@@ -36,7 +36,7 @@ func AddOtherRoutes(r *gin.RouterGroup) {
 		postsApi := api.NewPostsApi()
 		posts.POST("/list", postsApi.GetPostsList)
 		posts.POST("/save", postsApi.SavePosts)
-		posts.POST("/resave", postsApi.SavePosts)
+		//posts.POST("/resave", postsApi.SavePosts)
 		posts.DELETE("/delete", postsApi.DelPostsById)
 		posts.POST("/listByUser", postsApi.GetListByUser)
 		posts.POST("/likes", postsApi.GetLikeByUser)

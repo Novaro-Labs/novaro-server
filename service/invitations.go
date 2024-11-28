@@ -25,3 +25,11 @@ func (s *InvitationsService) Save(i *model.Invitations) error {
 
 	return s.dao.Save(&data)
 }
+
+func (s *InvitationsService) CheckInvitationRewards(inviteeId, code string) (bool, error) {
+	return s.dao.CheckInvitationRewards(inviteeId, code)
+}
+
+func (s *InvitationsService) CheckInvitee(inviteeId string) (bool, error) {
+	return s.dao.CheckInvitee(inviteeId)
+}

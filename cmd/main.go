@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/zhufuyi/sponge/pkg/app"
+	"gorm.io/gorm"
 	initial2 "novaro-server/cmd/initial"
 	"novaro-server/model"
 )
@@ -14,6 +15,7 @@ func main() {
 	initial2.InitApp()
 	services := initial2.CreateServices()
 	closes := initial2.Close(services)
+	//dropTableGorm()
 	initDB()
 	a := app.New(services, closes)
 	a.Run()
@@ -42,4 +44,13 @@ func initDB() {
 	db.AutoMigrate(&model.PointsChangeLog{})
 	db.AutoMigrate(&model.NftTokens{})
 	db.AutoMigrate(&model.Likes{})
+}
+func dropTableGorm() {
+	db := model.GetDB()
+
+	db.Session(&gorm.Session{AllowGlobalUpdate: true}).Exec("PRAGMA foreign_keys = OFF")
+
+	db.Migrator().DropTable(&model.Posts{})
+
+	db.Session(&gorm.Session{AllowGlobalUpdate: true}).Exec("PRAGMA foreign_keys = ON")
 }

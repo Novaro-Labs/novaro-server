@@ -77,13 +77,12 @@ func (s *PostService) GetList(p *model.PostsQuery) (resp []model.Posts, err erro
 			count, _ := s.commentsDao.GetCommentCount(resp[i].Id)
 			resp[i].CommentsAmount = count
 
-			// 获取图片
-			source, err2 := s.imgsDao.GetImgsBySourceId(resp[i].SourceId)
-			if err2 != nil {
-				resp[i].Imgs = nil
-			} else {
-				resp[i].Imgs = source
-			}
+			//source, err2 := s.imgsDao.GetImgsBySourceId(resp[i].SourceId)
+			//if err2 != nil {
+			//	resp[i].Imgs = nil
+			//} else {
+			//	resp[i].Imgs = source
+			//}
 
 		}(i)
 	}
@@ -124,13 +123,17 @@ func (s *PostService) Save(posts *model.Posts) error {
 			points = 0
 		}
 
-		if user.WalletPublicKey != nil {
-			err2 := s.postPointsDao.Save(tx, &model.PostPoints{
+		if user.WalletPublicKey != "" {
+			err2 = s.postPointsDao.Save(tx, &model.PostPoints{
 				PostId:    posts.Id,
 				Points:    float64(points),
 				CreatedAt: time.Now(),
 			})
-			logger.Errorf("failed to save post points: %v", err2)
+			if err != nil {
+				logger.Errorf("failed to save post points: %v", err2)
+				return err2
+			}
+
 		}
 
 		return nil

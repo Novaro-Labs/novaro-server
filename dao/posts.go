@@ -144,11 +144,12 @@ func (d *PostsDao) GetCountByUserId(userId string) (count int64, err error) {
 }
 func (d *PostsDao) Save(tx *gorm.DB, posts *model.Posts) error {
 	var data = model.Posts{
-		Id:         posts.Id,
-		UserId:     posts.UserId,
-		Content:    posts.Content,
-		OriginalId: posts.OriginalId,
-		SourceId:   posts.SourceId,
+		Id:          posts.Id,
+		UserId:      posts.UserId,
+		Content:     posts.Content,
+		ImageBase64: posts.ImageBase64,
+		OriginalId:  posts.OriginalId,
+		SourceId:    posts.SourceId,
 	}
 
 	if tx == nil {

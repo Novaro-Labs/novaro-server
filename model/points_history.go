@@ -9,7 +9,7 @@ import (
 
 type PointsHistory struct {
 	Id       string     `json:"id,omitempty"`
-	Wallet   *string    `json:"wallet,omitempty"`
+	Wallet   string     `json:"wallet,omitempty"`
 	Points   float64    `json:"points,omitempty"`
 	Status   int        `json:"status,omitempty"`
 	CreateAt *time.Time `json:"createAt,omitempty"`

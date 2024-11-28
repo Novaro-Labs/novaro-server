@@ -14,7 +14,7 @@ type Users struct {
 	Avatar          *string    `json:"avatar,omitempty"`
 	Followers       uint       `json:"followers,omitempty"`
 	Following       uint       `json:"following,omitempty"`
-	WalletPublicKey *string    `json:"walletPublicKey,omitempty"`
+	WalletPublicKey string     `json:"walletPublicKey,omitempty"`
 	InvitationCode  *string    `json:"invitationCode,omitempty"`
 	UserLevel       int        `json:"userLevel,omitempty"`
 	UserScore       float64    `json:"userScore,omitempty"`

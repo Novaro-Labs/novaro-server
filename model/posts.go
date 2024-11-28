@@ -18,10 +18,11 @@ type Posts struct {
 	OriginalId     string    `json:"originalId"`
 	ViewAmount     int       `json:"viewAmount"`
 	SourceId       string    `json:"sourceId"`
+	ImageBase64    string    `json:"imageBase64"`
 	User           *Users    `json:"user" gorm:"foreignKey:id;references:UserId"`
-	Imgs           []Imgs    `json:"Imgs" gorm:"-"`
-	Comments       *Comments `json:"comments" gorm:"foreignKey:PostId"`
-	IsLike         bool      `json:"isLike" gorm:"-"`
+	//Imgs           []Imgs    `json:"imgs" gorm:"-"`
+	Comments *Comments `json:"comments" gorm:"foreignKey:PostId"`
+	IsLike   bool      `json:"isLike" gorm:"-"`
 }
 
 func (Posts) TableName() string {

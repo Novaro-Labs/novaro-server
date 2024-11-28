@@ -128,8 +128,8 @@ func (d *TagsRecordDao) GetYesterdayTagsRecords() ([]model.TagsRecords, error) {
 	return records, err
 }
 
-func (d *TagsRecordDao) Points(wattle *string, nftLevel int) int64 {
-	if wattle == nil {
+func (d *TagsRecordDao) Points(wattle string, nftLevel int) int64 {
+	if wattle == "" {
 		return 0
 	}
 	defaultPoints := 5

@@ -5,6 +5,9 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"github.com/casbin/casbin/v2/log"
+	"github.com/gin-contrib/sessions"
+	"github.com/gin-gonic/gin"
 	"io"
 	"net"
 	"net/http"
@@ -15,10 +18,6 @@ import (
 	"novaro-server/service"
 	"strings"
 	"time"
-
-	"github.com/casbin/casbin/v2/log"
-	"github.com/gin-contrib/sessions"
-	"github.com/gin-gonic/gin"
 )
 
 const (
@@ -30,6 +29,8 @@ func AddAuthRoutes(rg *gin.RouterGroup) {
 
 	auth.GET("/login", login)
 	auth.GET("/callback", callback)
+	auth.GET("/wallet_login", WalletLogin)
+	auth.POST("/connect_wallet", ConnectWallet)
 }
 
 func login(c *gin.Context) {
@@ -50,6 +51,9 @@ func login(c *gin.Context) {
 		}
 
 		queryParams.Add("code", code)
+	} else {
+		c.JSON(http.StatusBadRequest, gin.H{"message": "The code is required"})
+		return
 	}
 
 	//redirectUri := redirectUrl(c, queryParams)
@@ -92,6 +96,13 @@ func callback(c *gin.Context) {
 	user, err := getUserInfo(token)
 	if err != nil {
 		c.JSON(500, gin.H{"error": err.Error()})
+		return
+	}
+	invitationsService := service.NewInvitationsService()
+	if isCheckInvitee, _ := invitationsService.CheckInvitee(user.Id); !isCheckInvitee {
+		invitationsService.Save(&model.Invitations{InviterId: user.Id, InviteeId: user.Id, Rewards: 100})
+	} else if isCheckInvitationReward, _ := invitationsService.CheckInvitationRewards(user.Id, code); !isCheckInvitationReward {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Invalid login attempt"})
 		return
 	}
 
@@ -231,6 +242,59 @@ func newHttpClient() *http.Client {
 		Transport: transport,
 	}
 	return client
+}
+
+type ConnectWalletRequest struct {
+	WalletAddr string `json:"wallet_addr" binding:"required"`
+	Id         string `json:"id" binding:"required"`
+}
+
+func ConnectWallet(c *gin.Context) {
+	var connectWallet ConnectWalletRequest
+	err := c.ShouldBindJSON(&connectWallet)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	userService := service.NewUserService()
+	if isExist, _ := userService.UserExists(connectWallet.Id); isExist {
+		c.JSON(http.StatusOK, gin.H{"error": "wallet already connected"})
+		return
+	}
+	_, err = userService.SaveUsers(&model.Users{Id: connectWallet.Id, WalletPublicKey: connectWallet.WalletAddr})
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"msg": "wallet connected"})
+	return
+
+}
+
+type WalletLoginRequest struct {
+	WalletAddr string `json:"wallet_addr" binding:"required"`
+}
+
+func WalletLogin(c *gin.Context) {
+	var walletLogin WalletLoginRequest
+	err := c.ShouldBindJSON(&walletLogin)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	userService := service.NewUserService()
+	if isExist, _ := userService.UserExists(walletLogin.WalletAddr); !isExist {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid " + walletLogin.WalletAddr})
+		return
+	}
+
+	session := sessions.Default(c)
+	session.Set(auth.Userkey, walletLogin.WalletAddr)
+	if err := session.Save(); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save session"})
+		return
+	}
+
 }
 
 type Token struct {

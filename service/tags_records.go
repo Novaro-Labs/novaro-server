@@ -316,8 +316,8 @@ func (s *TagsRecordService) removeCacheRecords(userId, postId, tagId string) err
 	return err
 }
 
-func (s *TagsRecordService) TagPoints(wattle *string, count int64) float64 {
-	if wattle == nil {
+func (s *TagsRecordService) TagPoints(wattle string, count int64) float64 {
+	if wattle == "" {
 		return 0
 	}
 
